@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func (ds *dscache) verifyEndAndStart() error {
+func (ds *Dscache) verifyEndAndStart() error {
 
 	ds.mu.Lock()
 	start := ds.listStart
@@ -26,7 +26,7 @@ func (ds *dscache) verifyEndAndStart() error {
 		for start.previous != nil {
 			if end != start {
 				ds.mu.Unlock()
-				return errors.New("listStart does not match order of listEnd.")
+				return errors.New("listStart does not match order of listEnd")
 			}
 			end = end.previous
 			start = start.previous
@@ -38,7 +38,7 @@ func (ds *dscache) verifyEndAndStart() error {
 	return nil
 }
 
-func (ds *dscache) verifyUniqueKeys() error {
+func (ds *Dscache) verifyUniqueKeys() error {
 	ds.mu.Lock()
 	test := make(map[string]bool)
 	start := ds.listStart
@@ -48,7 +48,7 @@ func (ds *dscache) verifyUniqueKeys() error {
 			test[start.key] = true
 		} else {
 			ds.mu.Unlock()
-			return errors.New("Duplicated Key in listStart.")
+			return errors.New("Duplicated Key in listStart")
 		}
 		start = start.next
 	}
@@ -58,14 +58,14 @@ func (ds *dscache) verifyUniqueKeys() error {
 
 func TestInGoroutines(t *testing.T) {
 
-	var getSet = func(ds *dscache, key string, val string) {
+	var getSet = func(ds *Dscache, key string, val string) {
 		_, ok := ds.Get(key)
 		if !ok {
 			ds.Set(key, val, time.Second*10)
 		}
 	}
 
-	var lru = New(128)
+	var lru = New(128, time.Second/2)
 
 	rand.Seed(time.Now().UnixNano())
 
@@ -113,7 +113,7 @@ func TestInGoroutines2(t *testing.T) {
 		return testMap
 	}
 
-	var benchGetSet = func(ds *dscache, key string, testMap map[string]string) {
+	var benchGetSet = func(ds *Dscache, key string, testMap map[string]string) {
 		_, ok := ds.Get(key)
 		if !ok {
 			ds.Set(key, testMap[key], time.Second*10)
@@ -121,7 +121,7 @@ func TestInGoroutines2(t *testing.T) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	ds := New(1280000)
+	ds := New(1280000, time.Second/2)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
@@ -179,7 +179,7 @@ func TestInGoroutines3(t *testing.T) {
 	}
 
 	count := 0
-	var benchGetSet = func(ds *dscache, key string, testMap map[string]string) {
+	var benchGetSet = func(ds *Dscache, key string, testMap map[string]string) {
 		if count%100 == 0 {
 			ds.Purge(key)
 		} else {
@@ -192,7 +192,7 @@ func TestInGoroutines3(t *testing.T) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	ds := New(1280000)
+	ds := New(1280000, time.Second/2)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
@@ -248,7 +248,7 @@ func TestInGoroutines4(t *testing.T) {
 		return testMap
 	}
 
-	var benchGetSet = func(ds *dscache, key string, testMap map[string]string) {
+	var benchGetSet = func(ds *Dscache, key string, testMap map[string]string) {
 		_, ok := ds.Get(key)
 		if !ok {
 			ds.Set(key, testMap[key], time.Second/5)
@@ -256,7 +256,7 @@ func TestInGoroutines4(t *testing.T) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	ds := New(1280000)
+	ds := New(1280000, time.Second/2)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0

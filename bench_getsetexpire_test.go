@@ -47,7 +47,7 @@ func BenchmarkGetSetExpire(b *testing.B) {
 		return testMap
 	}
 
-	var benchGetSet1 = func(ds *dscache, key string, testMap map[string]string, failures *uint64) {
+	var benchGetSet1 = func(ds *Dscache, key string, testMap map[string]string, failures *uint64) {
 		_, ok := ds.Get(key)
 		if !ok {
 			ds.Set(key, testMap[key], time.Second*3/10)
@@ -57,7 +57,7 @@ func BenchmarkGetSetExpire(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := New(1000000)
+	ds := New(1000000, time.Second/2)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
@@ -116,7 +116,7 @@ func BenchmarkGetSetExpire3(b *testing.B) {
 		return keyArr
 	}
 
-	var getSet = func(ds *dscache, key string) {
+	var getSet = func(ds *Dscache, key string) {
 		_, ok := ds.Get(key)
 		if !ok {
 			ds.Set(key, tenThousandChars, time.Second*3/10)
@@ -125,7 +125,7 @@ func BenchmarkGetSetExpire3(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := New(500000000)
+	ds := New(500000000, time.Second/2)
 	keyArr := generateKeys()
 	for i := range keyArr {
 		ds.Set(keyArr[i], tenThousandChars, time.Second*3/10)

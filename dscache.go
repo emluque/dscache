@@ -14,13 +14,14 @@ type node struct {
 	validTill      time.Time
 }
 
-type dscache struct {
-	keys      map[string]*node
-	listStart *node
-	listEnd   *node
-	size      uint64
-	Maxsize   uint64
-	mu        sync.Mutex
+type Dscache struct {
+	keys        map[string]*node
+	listStart   *node
+	listEnd     *node
+	size        uint64
+	Maxsize     uint64
+	mu          sync.Mutex
+	workerSleep time.Duration
 }
 
 /*
@@ -33,24 +34,27 @@ type dscache struct {
 
 */
 
-var EMaxsize = errors.New("Value is Bigger than Allowed Maxsize")
+var ErrMaxsize = errors.New("Value is Bigger than Allowed Maxsize")
 
-func New(maxsize uint64) *dscache {
-	var ds *dscache = new(dscache)
+func New(maxsize uint64, workerSleep time.Duration) *Dscache {
+	ds := new(Dscache)
 	ds.keys = make(map[string]*node)
 	ds.Maxsize = maxsize
 	ds.size = 0
-	go ds.worker()
+	ds.workerSleep = workerSleep
+	if workerSleep > 0 {
+		go ds.worker()
+	}
 	return ds
 }
 
 //TODO: ERROR CHECKING
-func (ds *dscache) Set(key, payload string, expires time.Duration) error {
+func (ds *Dscache) Set(key, payload string, expires time.Duration) error {
 	//Verify Size
 	nodeSize := (uint64(len(key)) + uint64(len(payload))) * 8
 	if nodeSize > ds.Maxsize {
 		//Node Exceeds Maxsize
-		return EMaxsize
+		return ErrMaxsize
 	}
 
 	ds.mu.Lock()
@@ -67,7 +71,7 @@ func (ds *dscache) Set(key, payload string, expires time.Duration) error {
 		ds.sendToTop(old)
 	} else {
 		//create and add Node
-		var n *node = new(node)
+		n := new(node)
 		n.key = key
 		n.payload = payload
 		n.size = nodeSize
@@ -84,7 +88,7 @@ func (ds *dscache) Set(key, payload string, expires time.Duration) error {
 	return nil
 }
 
-func (ds *dscache) Get(key string) (string, bool) {
+func (ds *Dscache) Get(key string) (string, bool) {
 	ds.mu.Lock()
 	n, ok := ds.keys[key]
 	if !ok {
@@ -103,7 +107,7 @@ func (ds *dscache) Get(key string) (string, bool) {
 	return n.payload, true
 }
 
-func (ds *dscache) Purge(key string) {
+func (ds *Dscache) Purge(key string) {
 	ds.mu.Lock()
 	n, ok := ds.keys[key]
 	if !ok {
@@ -115,7 +119,7 @@ func (ds *dscache) Purge(key string) {
 	return
 }
 
-func (ds *dscache) worker() {
+func (ds *Dscache) worker() {
 	for {
 		end := ds.listEnd
 		for end != nil {
@@ -131,11 +135,11 @@ func (ds *dscache) worker() {
 				end = end.previous
 			}
 		}
-		time.Sleep(time.Second / 2)
+		time.Sleep(ds.workerSleep)
 	}
 }
 
-func (ds *dscache) sendToTop(n *node) {
+func (ds *Dscache) sendToTop(n *node) {
 	var listStart = ds.listStart
 	if listStart == nil {
 		ds.listStart = n
@@ -160,7 +164,7 @@ func (ds *dscache) sendToTop(n *node) {
 	ds.listStart = n
 }
 
-func (ds *dscache) resize() {
+func (ds *Dscache) resize() {
 	if ds.size > ds.Maxsize {
 		//Shrink lisk
 		for ds.size > ds.Maxsize {
@@ -170,7 +174,7 @@ func (ds *dscache) resize() {
 	}
 }
 
-func (ds *dscache) delete(n *node) {
+func (ds *Dscache) delete(n *node) {
 	if n.next != nil {
 		n.next.previous = n.previous
 	}

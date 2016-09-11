@@ -44,7 +44,7 @@ func BenchmarkGetSetPurge(b *testing.B) {
 	}
 
 	count := 0
-	var benchGetSet1 = func(ds *dscache, key string, testMap map[string]string, failures *uint64) {
+	var benchGetSet1 = func(ds *Dscache, key string, testMap map[string]string, failures *uint64) {
 		if count%100 == 0 {
 			ds.Purge(key)
 		} else {
@@ -59,7 +59,7 @@ func BenchmarkGetSetPurge(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := New(1000000)
+	ds := New(1000000, time.Second/2)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
@@ -118,7 +118,7 @@ func BenchmarkGetSetPurge3(b *testing.B) {
 	}
 
 	count := 0
-	var getSet = func(ds *dscache, key string) {
+	var getSet = func(ds *Dscache, key string) {
 		if count%50 == 0 {
 			ds.Purge(key)
 		} else {
@@ -132,7 +132,7 @@ func BenchmarkGetSetPurge3(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := New(500000000)
+	ds := New(500000000, time.Second/2)
 	keyArr := generateKeys()
 	for i := range keyArr {
 		ds.Set(keyArr[i], tenThousandChars, time.Second*10)

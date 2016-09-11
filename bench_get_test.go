@@ -9,7 +9,7 @@ import (
 /*
 	#Keys = 17576
 	Payload Size = 10 + 8
-	Cache size to Fit everything in memory ~ 316368 bytes 316k
+	Cache size to Fit everything in memory ~ 316368 bytes ~316k
 
 	It should fit into processor cache.
 

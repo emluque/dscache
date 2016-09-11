@@ -8,13 +8,14 @@ import (
 
 /*
 	#Keys = 17576
-	Payload Size = 10
-	Cache size to Fit everything in memory ~ 1406080 bytes
+	Payload Size = 10 + 8
+	Cache size to Fit everything in memory ~ 316368 bytes 316k
 
-	See what heppens with Locality and Fitting into processor cache
+	It should fit into processor cache.
+
 */
 
-func BenchmarkGet(b *testing.B) {
+func BenchmarkGet1(b *testing.B) {
 
 	var generateKeysPlusValues = func() map[string]string {
 		var letters = "abcdefghijklmnopqrstuvwxyz"
@@ -32,7 +33,7 @@ func BenchmarkGet(b *testing.B) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	ds := New(1406080, time.Second/2)
+	ds := New(316368, time.Second/2)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
@@ -52,10 +53,10 @@ func BenchmarkGet(b *testing.B) {
 
 /*
 	#Keys = 140608
-	Payload Size = [65*3, 122*3] = [195, 366]
+	Payload Size = [65*3 + 8, 122*3 + 8] = [203, 374]
 	Ascci 'A' = 65
 	Ascci 'z' = 122
-	Cache size to Fit everything in memory ~ 411 Mb
+	Cache size to Fit everything in memory ~ 52 Mb
 */
 
 func BenchmarkGet2(b *testing.B) {
@@ -86,7 +87,7 @@ func BenchmarkGet2(b *testing.B) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	ds := New(411000000, time.Second/2)
+	ds := New(100000000, time.Second/2)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0

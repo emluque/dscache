@@ -27,8 +27,8 @@ type Dscache struct {
 /*
 
 TODO:
-- Better size (size, align) for precise memory usage
-- do better (actually more) benchmarks
+
+- TEST SPLITTING INTO MANY LISTS
 - clean up all code
 - godoc general
 

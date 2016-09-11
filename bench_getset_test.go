@@ -7,14 +7,12 @@ import (
 	"time"
 )
 
-//import "fmt"
-
 /*
-	#Keys = 140608
-	Payload Size = [65*3, 122*3] = [195, 366]
-	Ascci 'A' = 65
-	Ascci 'z' = 122
-	Cache size: ~1 Meg
+	#Keys = 17576
+	Payload Size = 10 + 8
+	Cache size to Fit everything in memory ~ 316368 bytes ~316k
+
+	cache size ~210k
 
 */
 
@@ -55,7 +53,7 @@ func BenchmarkGetSet(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := New(1000000, time.Second/2)
+	ds := New(210000, time.Second/2)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
@@ -74,19 +72,19 @@ func BenchmarkGetSet(b *testing.B) {
 		go benchGetSet1(ds, key, testMap, &failures)
 	}
 
-	/*	failureRate := float64(failures) / float64(b.N)
+	//	failureRate := float64(failures) / float64(b.N)
+	//	fmt.Printf("Failure Rate: %.4f -- ds.size: %d \n", failureRate, ds.size)
 
-		fmt.Printf("Failure Rate: %.4f -- ds.size: %d \n", failureRate, ds.size)
-	*/
 }
 
 /*
 	#Keys = 140608
-	Payload Size = 10000
-	Total size of all keys ~ 1G
+	Payload Size = 10000 + 8
+	Total size of all keys ~ 1.4G
 
 	Ascci 'A' = 65
 	Ascci 'z' = 122
+
 	Cache size: ~100 Meg
 
 */
@@ -107,16 +105,18 @@ func BenchmarkGetSet2(b *testing.B) {
 				for k := 0; k < len(letters); k++ {
 					var tmpKey = letters[i:i+1] + letters[j:j+1] + letters[k:k+1]
 					keyArr[count] = tmpKey
+					count++
 				}
 			}
 		}
 		return keyArr
 	}
 
-	var getSet = func(ds *Dscache, key string) {
+	var getSet = func(ds *Dscache, key string, failures *uint64) {
 		_, ok := ds.Get(key)
 		if !ok {
 			ds.Set(key, tenThousandChars, time.Second*10)
+			*failures++
 		}
 	}
 
@@ -130,17 +130,22 @@ func BenchmarkGetSet2(b *testing.B) {
 
 	b.StartTimer()
 
+	failures := uint64(0)
+
 	for i := 0; i < b.N; i++ {
 		key := keyArr[rand.Intn(140608)]
-		go getSet(ds, key)
+		go getSet(ds, key, &failures)
 	}
+
+	//	failureRate := float64(failures) / float64(b.N)
+	//	fmt.Printf("Failure Rate: %.4f -- ds.size: %d \n", failureRate, ds.size)
 
 }
 
 /*
 	#Keys = 140608
 	Payload Size = 10000
-	Total size of all keys ~ 1G
+	Total size of all keys ~ 1.4G
 
 	Ascci 'A' = 65
 	Ascci 'z' = 122
@@ -164,6 +169,7 @@ func BenchmarkGetSet3(b *testing.B) {
 				for k := 0; k < len(letters); k++ {
 					var tmpKey = letters[i:i+1] + letters[j:j+1] + letters[k:k+1]
 					keyArr[count] = tmpKey
+					count++
 				}
 			}
 		}
@@ -180,6 +186,64 @@ func BenchmarkGetSet3(b *testing.B) {
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
 	ds := New(500000000, time.Second/2)
+	keyArr := generateKeys()
+	for i := range keyArr {
+		ds.Set(keyArr[i], tenThousandChars, time.Second*10)
+	}
+
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		key := keyArr[rand.Intn(140608)]
+		go getSet(ds, key)
+	}
+
+}
+
+/*
+	#Keys = 140608
+	Payload Size = 10000
+	Total size of all keys ~ 1.4G
+
+	Ascci 'A' = 65
+	Ascci 'z' = 122
+	Cache size: 2G
+
+*/
+
+func BenchmarkGetSet4(b *testing.B) {
+
+	tenChars := "012345678"
+	hundredChars := tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars
+	thousandChars := hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars
+	tenThousandChars := thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars
+
+	var generateKeys = func() [140608]string {
+		var letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		var keyArr [140608]string
+		count := 0
+		for i := 0; i < len(letters); i++ {
+			for j := 0; j < len(letters); j++ {
+				for k := 0; k < len(letters); k++ {
+					var tmpKey = letters[i:i+1] + letters[j:j+1] + letters[k:k+1]
+					keyArr[count] = tmpKey
+					count++
+				}
+			}
+		}
+		return keyArr
+	}
+
+	var getSet = func(ds *Dscache, key string) {
+		_, ok := ds.Get(key)
+		if !ok {
+			ds.Set(key, tenThousandChars, time.Second*10)
+		}
+	}
+
+	b.StopTimer()
+	rand.Seed(time.Now().UnixNano())
+	ds := New(2000000000, time.Second/2)
 	keyArr := generateKeys()
 	for i := range keyArr {
 		ds.Set(keyArr[i], tenThousandChars, time.Second*10)

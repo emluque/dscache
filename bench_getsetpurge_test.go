@@ -8,11 +8,11 @@ import "sync/atomic"
 //import "fmt"
 
 /*
-	#Keys = 140608
-	Payload Size = [65*3, 122*3] = [195, 366]
-	Ascci 'A' = 65
-	Ascci 'z' = 122
-	Cache size: ~1 Meg
+	#Keys = 17576
+	Payload Size = 10 + 8
+	Cache size to Fit everything in memory ~ 316368 bytes ~316k
+
+	cache size ~210k
 
 */
 
@@ -59,7 +59,7 @@ func BenchmarkGetSetPurge(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := New(1000000, time.Second/2)
+	ds := New(210000, time.Second/2)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
@@ -87,7 +87,7 @@ func BenchmarkGetSetPurge(b *testing.B) {
 /*
 	#Keys = 140608
 	Payload Size = 10000
-	Total size of all keys ~ 1G
+	Total size of all keys ~ 1.4G
 
 	Ascci 'A' = 65
 	Ascci 'z' = 122
@@ -111,6 +111,7 @@ func BenchmarkGetSetPurge3(b *testing.B) {
 				for k := 0; k < len(letters); k++ {
 					var tmpKey = letters[i:i+1] + letters[j:j+1] + letters[k:k+1]
 					keyArr[count] = tmpKey
+					count++
 				}
 			}
 		}

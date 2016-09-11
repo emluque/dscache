@@ -10,27 +10,41 @@ func TestSize(t *testing.T) {
 	if ds.size != 0 {
 		t.Error("Dscache.size not initialized in 0.")
 	}
+
+	var expectedSize uint64
+
 	ds.Set("a", "123", time.Second*10) //4
-	if ds.size != (4 * 8) {
+	expectedSize = (4 + 8)
+
+	if ds.size != expectedSize {
 		t.Error("Dscache.size not adding correctly. Test 1")
 	}
+
 	ds.Set("bb", "12345678", time.Second*10) //+10
-	if ds.size != (14 * 8) {
+	expectedSize += (10 + 8)
+
+	if ds.size != expectedSize {
 		t.Error("Dscache.size not adding correctly. Test 2")
 	}
+
 	ds.Set("1234567890", "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", time.Second*10) //+100
-	if ds.size != (114 * 8) {
+	expectedSize += (100 + 8)
+
+	if ds.size != expectedSize {
 		t.Error("Dscache.size not adding correctly. Test 3")
 	}
+
 	ds.Set("b234567890", "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", time.Second*10) //+1010
-	if ds.size != (1124 * 8) {
+	expectedSize += (1010 + 8)
+
+	if ds.size != expectedSize {
 		t.Error("Dscache.size not adding correctly. Test 4")
 	}
 }
 
 func TestSizeError(t *testing.T) {
-	var ds = New(80, 0)
-	err := ds.Set("a", "1234567890", time.Second*10) //88
+	var ds = New(16, 0)
+	err := ds.Set("a", "1234567890", time.Second*10) //10 + 8
 	if err != ErrMaxsize {
 		t.Error("Dscache.not returning an error when exceding size. Test 1")
 	}
@@ -135,11 +149,11 @@ func TestLRUOrderInsertPlusVariousGets(t *testing.T) {
 }
 
 func TestMaxsize(t *testing.T) {
-	var ds = New(128, 0)               //16*8
-	ds.Set("a", "abc", time.Second*10) //4
-	ds.Set("b", "abc", time.Second*10) //4
-	ds.Set("c", "abc", time.Second*10) //4
-	ds.Set("d", "abc", time.Second*10) //4
+	var ds = New(48, 0)                //
+	ds.Set("a", "abc", time.Second*10) //4 + 8
+	ds.Set("b", "abc", time.Second*10) //4 + 8
+	ds.Set("c", "abc", time.Second*10) //4 + 8
+	ds.Set("d", "abc", time.Second*10) //4 + 8
 
 	start := ds.listStart
 	if start.key != "d" || start.next.key != "c" || start.next.next.key != "b" || start.next.next.next.key != "a" {
@@ -174,11 +188,11 @@ func TestMaxsize(t *testing.T) {
 }
 
 func TestLRUOrderExhaustiveTest0(t *testing.T) {
-	var ds = New(128, 0)               //16*8
-	ds.Set("d", "ddd", time.Second*10) //4
-	ds.Set("c", "ccc", time.Second*10) //4
-	ds.Set("b", "bbb", time.Second*10) //4
-	ds.Set("a", "aaa", time.Second*10) //4
+	var ds = New(48, 0)                //12 * 4
+	ds.Set("d", "ddd", time.Second*10) //4 + 8
+	ds.Set("c", "ccc", time.Second*10) //4 + 8
+	ds.Set("b", "bbb", time.Second*10) //4 + 8
+	ds.Set("a", "aaa", time.Second*10) //4 + 8
 
 	//Currently it's a->b->c->d
 	start := ds.listStart
@@ -192,11 +206,11 @@ func TestLRUOrderExhaustiveTest0(t *testing.T) {
 }
 
 func TestLRUOrderExhaustiveTest1(t *testing.T) {
-	var ds = New(128, 0)               //16*8
-	ds.Set("d", "ddd", time.Second*10) //4
-	ds.Set("c", "ccc", time.Second*10) //4
-	ds.Set("b", "bbb", time.Second*10) //4
-	ds.Set("a", "aaa", time.Second*10) //4
+	var ds = New(48, 0)                //12 * 4
+	ds.Set("d", "ddd", time.Second*10) //4 + 8
+	ds.Set("c", "ccc", time.Second*10) //4 + 8
+	ds.Set("b", "bbb", time.Second*10) //4 + 8
+	ds.Set("a", "aaa", time.Second*10) //4 + 8
 
 	//Currently it's a->b->c->d
 	tmp, _ := ds.Get("a")
@@ -216,11 +230,11 @@ func TestLRUOrderExhaustiveTest1(t *testing.T) {
 }
 
 func TestLRUOrderExhaustiveTest2(t *testing.T) {
-	var ds = New(128, 0)               //16*8
-	ds.Set("d", "ddd", time.Second*10) //4
-	ds.Set("c", "ccc", time.Second*10) //4
-	ds.Set("b", "bbb", time.Second*10) //4
-	ds.Set("a", "aaa", time.Second*10) //4
+	var ds = New(48, 0)                //12 * 4
+	ds.Set("d", "ddd", time.Second*10) //4 + 8
+	ds.Set("c", "ccc", time.Second*10) //4 + 8
+	ds.Set("b", "bbb", time.Second*10) //4 + 8
+	ds.Set("a", "aaa", time.Second*10) //4 + 8
 
 	//Currently it's a->b->c->d
 	tmp, _ := ds.Get("b")
@@ -240,11 +254,11 @@ func TestLRUOrderExhaustiveTest2(t *testing.T) {
 }
 
 func TestLRUOrderExhaustiveTest3(t *testing.T) {
-	var ds = New(128, 0)               //16*8
-	ds.Set("d", "ddd", time.Second*10) //4
-	ds.Set("c", "ccc", time.Second*10) //4
-	ds.Set("b", "bbb", time.Second*10) //4
-	ds.Set("a", "aaa", time.Second*10) //4
+	var ds = New(48, 0)                //12 * 4
+	ds.Set("d", "ddd", time.Second*10) //4 + 8
+	ds.Set("c", "ccc", time.Second*10) //4 + 8
+	ds.Set("b", "bbb", time.Second*10) //4 + 8
+	ds.Set("a", "aaa", time.Second*10) //4 + 8
 
 	//Currently it's a->b->c->d
 	tmp, _ := ds.Get("c")
@@ -264,11 +278,11 @@ func TestLRUOrderExhaustiveTest3(t *testing.T) {
 }
 
 func TestLRUOrderExhaustiveTest4(t *testing.T) {
-	var ds = New(128, 0)               //16*8
-	ds.Set("d", "ddd", time.Second*10) //4
-	ds.Set("c", "ccc", time.Second*10) //4
-	ds.Set("b", "bbb", time.Second*10) //4
-	ds.Set("a", "aaa", time.Second*10) //4
+	var ds = New(48, 0)                //12 * 4
+	ds.Set("d", "ddd", time.Second*10) //4 + 8
+	ds.Set("c", "ccc", time.Second*10) //4 + 8
+	ds.Set("b", "bbb", time.Second*10) //4 + 8
+	ds.Set("a", "aaa", time.Second*10) //4 + 8
 
 	//Currently it's a->b->c->d
 	tmp, _ := ds.Get("d")
@@ -288,12 +302,11 @@ func TestLRUOrderExhaustiveTest4(t *testing.T) {
 }
 
 func TestSetOfExistingElement(t *testing.T) {
-
-	var ds = New(128, 0)               //16*8
-	ds.Set("d", "ddd", time.Second*10) //4
-	ds.Set("c", "ccc", time.Second*10) //4
-	ds.Set("b", "bbb", time.Second*10) //4
-	ds.Set("a", "aaa", time.Second*10) //4
+	var ds = New(48, 0)                //12 * 4
+	ds.Set("d", "ddd", time.Second*10) //4 + 8
+	ds.Set("c", "ccc", time.Second*10) //4 + 8
+	ds.Set("b", "bbb", time.Second*10) //4 + 8
+	ds.Set("a", "aaa", time.Second*10) //4 + 8
 
 	ds.Set("d", "new", time.Second*10)
 
@@ -315,11 +328,11 @@ func TestSetOfExistingElement(t *testing.T) {
 }
 
 func TestMaxsizeVariousSetsIncludingResets(t *testing.T) {
-	var ds = New(128, 0)               //16*8
-	ds.Set("a", "aaa", time.Second*10) //4
-	ds.Set("b", "bbb", time.Second*10) //4
-	ds.Set("c", "ccc", time.Second*10) //4
-	ds.Set("d", "ddd", time.Second*10) //4
+	var ds = New(48, 0)                //12*4
+	ds.Set("a", "aaa", time.Second*10) //12
+	ds.Set("b", "bbb", time.Second*10) //12
+	ds.Set("c", "ccc", time.Second*10) //12
+	ds.Set("d", "ddd", time.Second*10) //12
 
 	ds.Set("e", "eee", time.Second*10)
 	ds.Set("d", "ddd", time.Second*10)
@@ -339,11 +352,11 @@ func TestMaxsizeVariousSetsIncludingResets(t *testing.T) {
 }
 
 func TestLPurgeExhaustiveTest1(t *testing.T) {
-	var ds = New(128, 0)               //16*8
-	ds.Set("d", "ddd", time.Second*10) //4
-	ds.Set("c", "ccc", time.Second*10) //4
-	ds.Set("b", "bbb", time.Second*10) //4
-	ds.Set("a", "aaa", time.Second*10) //4
+	var ds = New(48, 0)                //12 * 4
+	ds.Set("d", "ddd", time.Second*10) //4 + 8
+	ds.Set("c", "ccc", time.Second*10) //4 + 8
+	ds.Set("b", "bbb", time.Second*10) //4 + 8
+	ds.Set("a", "aaa", time.Second*10) //4 + 8
 
 	//Currently it's a->b->c->d
 	ds.Purge("a")
@@ -360,11 +373,11 @@ func TestLPurgeExhaustiveTest1(t *testing.T) {
 }
 
 func TestLPurgeExhaustiveTest2(t *testing.T) {
-	var ds = New(128, 0)               //16*8
-	ds.Set("d", "ddd", time.Second*10) //4
-	ds.Set("c", "ccc", time.Second*10) //4
-	ds.Set("b", "bbb", time.Second*10) //4
-	ds.Set("a", "aaa", time.Second*10) //4
+	var ds = New(48, 0)                //12 * 4
+	ds.Set("d", "ddd", time.Second*10) //4 + 8
+	ds.Set("c", "ccc", time.Second*10) //4 + 8
+	ds.Set("b", "bbb", time.Second*10) //4 + 8
+	ds.Set("a", "aaa", time.Second*10) //4 + 8
 
 	//Currently it's a->b->c->d
 	ds.Purge("b")
@@ -381,11 +394,11 @@ func TestLPurgeExhaustiveTest2(t *testing.T) {
 }
 
 func TestLPurgeExhaustiveTest3(t *testing.T) {
-	var ds = New(128, 0)               //16*8
-	ds.Set("d", "ddd", time.Second*10) //4
-	ds.Set("c", "ccc", time.Second*10) //4
-	ds.Set("b", "bbb", time.Second*10) //4
-	ds.Set("a", "aaa", time.Second*10) //4
+	var ds = New(48, 0)                //12 * 4
+	ds.Set("d", "ddd", time.Second*10) //4 + 8
+	ds.Set("c", "ccc", time.Second*10) //4 + 8
+	ds.Set("b", "bbb", time.Second*10) //4 + 8
+	ds.Set("a", "aaa", time.Second*10) //4 + 8
 
 	//Currently it's a->b->c->d
 	ds.Purge("c")
@@ -402,11 +415,11 @@ func TestLPurgeExhaustiveTest3(t *testing.T) {
 }
 
 func TestLPurgeExhaustiveTest4(t *testing.T) {
-	var ds = New(128, 0)               //16*8
-	ds.Set("d", "ddd", time.Second*10) //4
-	ds.Set("c", "ccc", time.Second*10) //4
-	ds.Set("b", "bbb", time.Second*10) //4
-	ds.Set("a", "aaa", time.Second*10) //4
+	var ds = New(48, 0)                //12 * 4
+	ds.Set("d", "ddd", time.Second*10) //4 + 8
+	ds.Set("c", "ccc", time.Second*10) //4 + 8
+	ds.Set("b", "bbb", time.Second*10) //4 + 8
+	ds.Set("a", "aaa", time.Second*10) //4 + 8
 
 	//Currently it's a->b->c
 	ds.Purge("d")
@@ -423,11 +436,11 @@ func TestLPurgeExhaustiveTest4(t *testing.T) {
 }
 
 func TestExpireExhaustiveTest1(t *testing.T) {
-	var ds = New(128, 0)               //16*8
-	ds.Set("d", "ddd", time.Second/5)  //4
-	ds.Set("c", "ccc", time.Second*10) //4
-	ds.Set("b", "bbb", time.Second*10) //4
-	ds.Set("a", "aaa", time.Second*10) //4
+	var ds = New(48, 0)                //12*4
+	ds.Set("d", "ddd", time.Second/5)  //12
+	ds.Set("c", "ccc", time.Second*10) //12
+	ds.Set("b", "bbb", time.Second*10) //12
+	ds.Set("a", "aaa", time.Second*10) //12
 
 	//Currently it's a->b->c->d
 	time.Sleep(time.Second / 2)
@@ -450,7 +463,7 @@ func TestExpireExhaustiveTest1(t *testing.T) {
 }
 
 func TestExpireExhaustiveTest2(t *testing.T) {
-	var ds = New(128, 0)               //16*8
+	var ds = New(48, 0)                //12*4
 	ds.Set("d", "ddd", time.Second*10) //4
 	ds.Set("c", "ccc", time.Second/5)  //4
 	ds.Set("b", "bbb", time.Second*10) //4
@@ -476,7 +489,7 @@ func TestExpireExhaustiveTest2(t *testing.T) {
 }
 
 func TestExpireExhaustiveTest3(t *testing.T) {
-	var ds = New(128, 0)               //16*8
+	var ds = New(48, 0)                //12*4
 	ds.Set("d", "ddd", time.Second*10) //4
 	ds.Set("c", "ccc", time.Second*10) //4
 	ds.Set("b", "bbb", time.Second/5)  //4
@@ -502,7 +515,7 @@ func TestExpireExhaustiveTest3(t *testing.T) {
 }
 
 func TestExpireExhaustiveTest4(t *testing.T) {
-	var ds = New(128, 0)               //16*8
+	var ds = New(48, 0)                //12*4
 	ds.Set("d", "ddd", time.Second*10) //4
 	ds.Set("c", "ccc", time.Second*10) //4
 	ds.Set("b", "bbb", time.Second*10) //4

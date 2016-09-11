@@ -19,14 +19,14 @@ type Dscache struct {
 	listStart   *node
 	listEnd     *node
 	size        uint64
-	Maxsize     uint64
+	maxsize     uint64
 	mu          sync.Mutex
 	workerSleep time.Duration
 }
 
 /*
 
-- expire worker (test how that works)
+TODO:
 - Better size (size, align) for precise memory usage
 - do better (actually more) benchmarks
 - clean up all code
@@ -39,7 +39,7 @@ var ErrMaxsize = errors.New("Value is Bigger than Allowed Maxsize")
 func New(maxsize uint64, workerSleep time.Duration) *Dscache {
 	ds := new(Dscache)
 	ds.keys = make(map[string]*node)
-	ds.Maxsize = maxsize
+	ds.maxsize = maxsize
 	ds.size = 0
 	ds.workerSleep = workerSleep
 	if workerSleep > 0 {
@@ -48,11 +48,10 @@ func New(maxsize uint64, workerSleep time.Duration) *Dscache {
 	return ds
 }
 
-//TODO: ERROR CHECKING
 func (ds *Dscache) Set(key, payload string, expires time.Duration) error {
 	//Verify Size
-	nodeSize := (uint64(len(key)) + uint64(len(payload))) * 8
-	if nodeSize > ds.Maxsize {
+	nodeSize := (uint64(len(key)) + uint64(len(payload))) + 8 //Size of node structure is 8
+	if nodeSize > ds.maxsize {
 		//Node Exceeds Maxsize
 		return ErrMaxsize
 	}
@@ -81,7 +80,7 @@ func (ds *Dscache) Set(key, payload string, expires time.Duration) error {
 		ds.sendToTop(n)
 	}
 
-	if ds.size > ds.Maxsize {
+	if ds.size > ds.maxsize {
 		ds.resize()
 	}
 	ds.mu.Unlock()
@@ -165,9 +164,9 @@ func (ds *Dscache) sendToTop(n *node) {
 }
 
 func (ds *Dscache) resize() {
-	if ds.size > ds.Maxsize {
+	if ds.size > ds.maxsize {
 		//Shrink lisk
-		for ds.size > ds.Maxsize {
+		for ds.size > ds.maxsize {
 			end := ds.listEnd
 			ds.delete(end)
 		}

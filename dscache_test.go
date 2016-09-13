@@ -6,7 +6,12 @@ import (
 )
 
 func TestDscacheBasicGetSet(t *testing.T) {
-	var ds = New(100000, 0)
+
+	var getListNumber = func(key string) int {
+		return int(key[len(key)-1]) % 32
+	}
+	ds := NewConfigured(316368, 32, 0, getListNumber)
+
 	ds.Set("a", "a", time.Second*10)
 
 	tmp, _ := ds.Get("a")
@@ -27,7 +32,11 @@ func TestDscacheBasicGetSet(t *testing.T) {
 }
 
 func TestDscacheSetOfExistingElement(t *testing.T) {
-	var ds = New(480, 0)                //12 * 4
+	var getListNumber = func(key string) int {
+		return int(key[len(key)-1]) % 32
+	}
+	ds := NewConfigured(316368, 32, 0, getListNumber)
+
 	ds.Set("d", "ddd", time.Second*10) //4 + 8
 	ds.Set("c", "ccc", time.Second*10) //4 + 8
 	ds.Set("b", "bbb", time.Second*10) //4 + 8
@@ -41,9 +50,12 @@ func TestDscacheSetOfExistingElement(t *testing.T) {
 	}
 }
 
-
 func TestDscachePurge(t *testing.T) {
-	var ds = New(48, 0)                //12 * 4
+	var getListNumber = func(key string) int {
+		return int(key[len(key)-1]) % 32
+	}
+	ds := NewConfigured(316368, 32, 0, getListNumber)
+
 	ds.Set("d", "ddd", time.Second*10) //4 + 8
 	ds.Set("c", "ccc", time.Second*10) //4 + 8
 	ds.Set("b", "bbb", time.Second*10) //4 + 8
@@ -51,7 +63,7 @@ func TestDscachePurge(t *testing.T) {
 
 	ds.Purge("a")
 
-	_, ok := ds.Get("d")
+	_, ok := ds.Get("a")
 	if ok {
 		t.Error("DSCache Purge. Not Purged.")
 	}
@@ -59,7 +71,11 @@ func TestDscachePurge(t *testing.T) {
 }
 
 func TestDscacheExpire(t *testing.T) {
-	var ds = New(48, 0)                //12*4
+	var getListNumber = func(key string) int {
+		return int(key[len(key)-1]) % 32
+	}
+	ds := NewConfigured(316368, 32, 0, getListNumber)
+
 	ds.Set("d", "ddd", time.Second/5)  //12
 	ds.Set("c", "ccc", time.Second*10) //12
 	ds.Set("b", "bbb", time.Second*10) //12

@@ -55,7 +55,7 @@ func BenchmarkGetSetExpire(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := New(210000, time.Second/2)
+	ds := NewConfigured(210000, 32, time.Second/2, nil)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
@@ -124,7 +124,7 @@ func BenchmarkGetSetExpire3(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := New(500000000, time.Second/2)
+	ds := NewConfigured(500000000, 32, time.Second/2, nil)
 	keyArr := generateKeys()
 	for i := range keyArr {
 		ds.Set(keyArr[i], tenThousandChars, time.Second*3/10)

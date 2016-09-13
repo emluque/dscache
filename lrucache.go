@@ -46,6 +46,7 @@ func (lru *lrucache) set(key, payload string, expires time.Duration) error {
 	}
 
 	lru.mu.Lock()
+	defer lru.mu.Unlock()
 
 	//Check to see if it was already set
 	old, ok := lru.keys[key]
@@ -72,38 +73,36 @@ func (lru *lrucache) set(key, payload string, expires time.Duration) error {
 	if lru.size > lru.maxsize {
 		lru.resize()
 	}
-	lru.mu.Unlock()
 	return nil
 }
 
 func (lru *lrucache) get(key string) (string, bool) {
 	lru.mu.Lock()
+	defer lru.mu.Unlock()
+
 	n, ok := lru.keys[key]
 	if !ok {
 		//It doesn't exist
-		lru.mu.Unlock()
 		return "", false
 	}
 	if n.validTill.Before(time.Now()) {
 		//It has expired
 		lru.delete(n)
-		lru.mu.Unlock()
 		return "", false
 	}
 	lru.sendToTop(n)
-	lru.mu.Unlock()
 	return n.payload, true
 }
 
 func (lru *lrucache) purge(key string) bool {
 	lru.mu.Lock()
+	defer lru.mu.Unlock()
+
 	n, ok := lru.keys[key]
 	if !ok {
-		lru.mu.Unlock()
 		return false
 	}
 	lru.delete(n)
-	lru.mu.Unlock()
 	return true
 }
 

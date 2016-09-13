@@ -33,7 +33,12 @@ func BenchmarkGet1(b *testing.B) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	ds := New(316368, time.Second/2)
+
+	var getListNumber = func(key string) int {
+		return int(key[len(key)-1]) % 32
+	}
+	ds := NewConfigured(316368, 32, time.Second/2, getListNumber)
+
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
@@ -87,7 +92,9 @@ func BenchmarkGet2(b *testing.B) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	ds := New(100000000, time.Second/2)
+
+	ds := NewConfigured(100000000, 32, time.Second/2, nil)
+
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0

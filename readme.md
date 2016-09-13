@@ -19,13 +19,13 @@ Regardless of it's simplicity, based on some benchmarking I found out that this 
 
 #Create Cache
 
-ds := dscache.New(Maxsize)
+dscache = dscache.New(Maxsize)
 
 where Maxsize is the number of bytes in
 
 #Set Item
 
-ds.Set(key, value, expire)
+dscache.Set(key, value, expire)
 
 #Get Item
 

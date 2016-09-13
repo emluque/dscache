@@ -8,10 +8,10 @@ import (
 	"time"
 )
 
-func (ds *Dscache) verifyEndAndStart() error {
+func (lru *lrucache) verifyEndAndStart() error {
 
-	ds.mu.Lock()
-	start := ds.listStart
+	lru.mu.Lock()
+	start := lru.listStart
 
 	if start != nil {
 
@@ -20,12 +20,12 @@ func (ds *Dscache) verifyEndAndStart() error {
 			start = start.next
 		}
 
-		end := ds.listEnd
+		end := lru.listEnd
 
 		//Compare them
 		for start.previous != nil {
 			if end != start {
-				ds.mu.Unlock()
+				lru.mu.Unlock()
 				return errors.New("listStart does not match order of listEnd")
 			}
 			end = end.previous
@@ -33,39 +33,39 @@ func (ds *Dscache) verifyEndAndStart() error {
 		}
 
 	}
-	ds.mu.Unlock()
+	lru.mu.Unlock()
 
 	return nil
 }
 
-func (ds *Dscache) verifyUniqueKeys() error {
-	ds.mu.Lock()
+func (lru *lrucache) verifyUniqueKeys() error {
+	lru.mu.Lock()
 	test := make(map[string]bool)
-	start := ds.listStart
+	start := lru.listStart
 	for start != nil {
 		_, ok := test[start.key]
 		if !ok {
 			test[start.key] = true
 		} else {
-			ds.mu.Unlock()
+			lru.mu.Unlock()
 			return errors.New("Duplicated Key in listStart")
 		}
 		start = start.next
 	}
-	ds.mu.Unlock()
+	lru.mu.Unlock()
 	return nil
 }
 
 func TestInGoroutines(t *testing.T) {
 
-	var getSet = func(ds *Dscache, key string, val string) {
-		_, ok := ds.Get(key)
+	var getSet = func(lru *lrucache, key string, val string) {
+		_, ok := lru.get(key)
 		if !ok {
-			ds.Set(key, val, time.Second*10)
+			lru.set(key, val, time.Second*10)
 		}
 	}
 
-	var lru = New(128, time.Second/2)
+	var lru = newLRUCache(128, time.Second/2)
 
 	rand.Seed(time.Now().UnixNano())
 
@@ -113,35 +113,35 @@ func TestInGoroutines2(t *testing.T) {
 		return testMap
 	}
 
-	var benchGetSet = func(ds *Dscache, key string, testMap map[string]string) {
-		_, ok := ds.Get(key)
+	var benchGetSet = func(lru *lrucache, key string, testMap map[string]string) {
+		_, ok := lru.get(key)
 		if !ok {
-			ds.Set(key, testMap[key], time.Second*10)
+			lru.set(key, testMap[key], time.Second*10)
 		}
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	ds := New(1280000, time.Second/2)
+	lru := newLRUCache(1280000, time.Second/2)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
 	for key, val := range testMap {
-		ds.Set(key, val, time.Second*10)
+		lru.set(key, val, time.Second*10)
 		keyArr[c] = key
 		c++
 	}
 
 	for i := 0; i < 1000000; i++ {
 		key := keyArr[rand.Intn(140608)]
-		go benchGetSet(ds, key, testMap)
+		go benchGetSet(lru, key, testMap)
 	}
 
 	time.Sleep(5 * time.Second)
-	err := ds.verifyEndAndStart()
+	err := lru.verifyEndAndStart()
 	if err != nil {
 		t.Error(err)
 	}
-	err = ds.verifyUniqueKeys()
+	err = lru.verifyUniqueKeys()
 	if err != nil {
 		t.Error(err)
 	}
@@ -179,40 +179,40 @@ func TestInGoroutines3(t *testing.T) {
 	}
 
 	count := 0
-	var benchGetSet = func(ds *Dscache, key string, testMap map[string]string) {
+	var benchGetSet = func(lru *lrucache, key string, testMap map[string]string) {
 		if count%100 == 0 {
-			ds.Purge(key)
+			lru.purge(key)
 		} else {
-			_, ok := ds.Get(key)
+			_, ok := lru.get(key)
 			if !ok {
-				ds.Set(key, testMap[key], time.Second*10)
+				lru.set(key, testMap[key], time.Second*10)
 			}
 		}
 		count++
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	ds := New(1280000, time.Second/2)
+	lru := newLRUCache(1280000, time.Second/2)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
 	for key, val := range testMap {
-		ds.Set(key, val, time.Second*10)
+		lru.set(key, val, time.Second*10)
 		keyArr[c] = key
 		c++
 	}
 
 	for i := 0; i < 1000000; i++ {
 		key := keyArr[rand.Intn(140608)]
-		go benchGetSet(ds, key, testMap)
+		go benchGetSet(lru, key, testMap)
 	}
 
 	time.Sleep(5 * time.Second)
-	err := ds.verifyEndAndStart()
+	err := lru.verifyEndAndStart()
 	if err != nil {
 		t.Error(err)
 	}
-	err = ds.verifyUniqueKeys()
+	err = lru.verifyUniqueKeys()
 	if err != nil {
 		t.Error(err)
 	}
@@ -248,35 +248,35 @@ func TestInGoroutines4(t *testing.T) {
 		return testMap
 	}
 
-	var benchGetSet = func(ds *Dscache, key string, testMap map[string]string) {
-		_, ok := ds.Get(key)
+	var benchGetSet = func(lru *lrucache, key string, testMap map[string]string) {
+		_, ok := lru.get(key)
 		if !ok {
-			ds.Set(key, testMap[key], time.Second/5)
+			lru.set(key, testMap[key], time.Second/5)
 		}
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	ds := New(1280000, time.Second/2)
+	lru := newLRUCache(1280000, time.Second/2)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
 	for key, val := range testMap {
-		ds.Set(key, val, time.Second/5)
+		lru.set(key, val, time.Second/5)
 		keyArr[c] = key
 		c++
 	}
 
 	for i := 0; i < 1000000; i++ {
 		key := keyArr[rand.Intn(140608)]
-		go benchGetSet(ds, key, testMap)
+		go benchGetSet(lru, key, testMap)
 	}
 
 	time.Sleep(5 * time.Second)
-	err := ds.verifyEndAndStart()
+	err := lru.verifyEndAndStart()
 	if err != nil {
 		t.Error(err)
 	}
-	err = ds.verifyUniqueKeys()
+	err = lru.verifyUniqueKeys()
 	if err != nil {
 		t.Error(err)
 	}

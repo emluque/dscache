@@ -9,13 +9,13 @@ import (
 /*
 	#Keys = 17576
 	Payload Size = 10 + 8
-	Cache size to Fit everything in memory ~ 316368 bytes ~316k
+	Cache size to Fit everything in memory ~ 316368 bytes 316k
 
 	It should fit into processor cache.
 
 */
 
-func BenchmarkGet1(b *testing.B) {
+func BenchmarkSet1(b *testing.B) {
 
 	var generateKeysPlusValues = func() map[string]string {
 		var letters = "abcdefghijklmnopqrstuvwxyz"
@@ -37,8 +37,7 @@ func BenchmarkGet1(b *testing.B) {
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
-	for key, val := range testMap {
-		ds.Set(key, val, time.Second*10)
+	for key, _ := range testMap {
 		keyArr[c] = key
 		c++
 	}
@@ -47,7 +46,7 @@ func BenchmarkGet1(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		key := keyArr[rand.Intn(17576)]
-		go ds.Get(key)
+		go ds.Set(key, testMap[key], time.Second*10)
 	}
 }
 
@@ -59,7 +58,7 @@ func BenchmarkGet1(b *testing.B) {
 	Cache size to Fit everything in memory ~ 52 Mb
 */
 
-func BenchmarkGet2(b *testing.B) {
+func BenchmarkSet2(b *testing.B) {
 
 	var generateValue = func(strLen int) string {
 		rand.Seed(time.Now().UnixNano())
@@ -91,8 +90,7 @@ func BenchmarkGet2(b *testing.B) {
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
-	for key, val := range testMap {
-		ds.Set(key, val, time.Second*10)
+	for key, _ := range testMap {
 		keyArr[c] = key
 		c++
 	}
@@ -101,6 +99,6 @@ func BenchmarkGet2(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		key := keyArr[rand.Intn(140608)]
-		go ds.Get(key)
+		ds.Set(key, testMap[key], time.Second*10)
 	}
 }

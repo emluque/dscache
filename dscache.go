@@ -7,13 +7,6 @@ type Dscache struct {
 	getListNumber func(string) int
 }
 
-const defaultNumberOfLists = int(32)
-const defaultWorkerSleep = time.Second
-
-var defaultGetListNumber = func(key string) int {
-	return int(key[len(key)-1]+key[len(key)-2]) % defaultNumberOfLists
-}
-
 /*
 
 TODO:
@@ -23,6 +16,22 @@ TODO:
 - godoc general
 
 */
+
+const defaultNumberOfLists = int(32)
+const defaultWorkerSleep = time.Second
+
+var defaultGetListNumber = func(key string) int {
+	return int(key[len(key)-1]+key[len(key)-2]) % defaultNumberOfLists
+}
+
+const (
+	B  uint64 = iota
+	KB        = 1 << (10 * iota)
+	MB
+	GB
+	TB
+	PB
+)
 
 func New(maxsize uint64) *Dscache {
 
@@ -39,7 +48,7 @@ func New(maxsize uint64) *Dscache {
 	return ds
 }
 
-func NewConfigured(maxsize uint64, numberOfLists int, workerSleep time.Duration, getListNumber func(string) int) *Dscache {
+func Custom(maxsize uint64, numberOfLists int, workerSleep time.Duration, getListNumber func(string) int) *Dscache {
 
 	if maxsize == 0 {
 		panic("Building dscache with maxsize of 0.")

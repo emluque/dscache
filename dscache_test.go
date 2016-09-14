@@ -10,7 +10,7 @@ func TestDscacheBasicGetSet(t *testing.T) {
 	var getListNumber = func(key string) int {
 		return int(key[len(key)-1]) % 32
 	}
-	ds := NewConfigured(316368, 32, 0, getListNumber)
+	ds := Custom(316368, 32, 0, getListNumber)
 
 	ds.Set("a", "a", time.Second*10)
 
@@ -35,7 +35,7 @@ func TestDscacheSetOfExistingElement(t *testing.T) {
 	var getListNumber = func(key string) int {
 		return int(key[len(key)-1]) % 32
 	}
-	ds := NewConfigured(316368, 32, 0, getListNumber)
+	ds := Custom(316368, 32, 0, getListNumber)
 
 	ds.Set("d", "ddd", time.Second*10) //4 + 8
 	ds.Set("c", "ccc", time.Second*10) //4 + 8
@@ -54,7 +54,7 @@ func TestDscachePurge(t *testing.T) {
 	var getListNumber = func(key string) int {
 		return int(key[len(key)-1]) % 32
 	}
-	ds := NewConfigured(316368, 32, 0, getListNumber)
+	ds := Custom(316368, 32, 0, getListNumber)
 
 	ds.Set("d", "ddd", time.Second*10) //4 + 8
 	ds.Set("c", "ccc", time.Second*10) //4 + 8
@@ -74,7 +74,7 @@ func TestDscacheExpire(t *testing.T) {
 	var getListNumber = func(key string) int {
 		return int(key[len(key)-1]) % 32
 	}
-	ds := NewConfigured(316368, 32, 0, getListNumber)
+	ds := Custom(316368, 32, 0, getListNumber)
 
 	ds.Set("d", "ddd", time.Second/5)  //12
 	ds.Set("c", "ccc", time.Second*10) //12

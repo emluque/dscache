@@ -33,7 +33,7 @@ func BenchmarkSet1(b *testing.B) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	ds := NewConfigured(316368, 32, time.Second/2, nil)
+	ds := Custom(316*KB, 32, time.Second/2, nil)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
@@ -86,7 +86,7 @@ func BenchmarkSet2(b *testing.B) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	ds := NewConfigured(100000000, 32, time.Second/2, nil)
+	ds := Custom(100*MB, 32, time.Second/2, nil)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0

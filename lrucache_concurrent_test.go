@@ -65,7 +65,7 @@ func TestInGoroutines(t *testing.T) {
 		}
 	}
 
-	var lru = newLRUCache(128, time.Second/2)
+	var lru = newLRUCache(128*B, time.Second/2)
 
 	rand.Seed(time.Now().UnixNano())
 

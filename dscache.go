@@ -11,9 +11,8 @@ type Dscache struct {
 
 TODO:
 
-- Move benchmarks to only one file - Use Better names - Do pure Set too
-- clean up all code
-- godoc general
+- godoc --- Add documentation!
+- Write a proper readme.md!
 
 */
 

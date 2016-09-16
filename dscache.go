@@ -11,6 +11,7 @@ type Dscache struct {
 
 TODO:
 
+- Do a proper set of simluations not with benchmarks
 - godoc --- Add documentation!
 - Write a proper readme.md!
 

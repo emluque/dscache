@@ -56,7 +56,7 @@ func (lru *lrucache) set(key, payload string, expires time.Duration) error {
 		old.payload = payload
 		old.size = nodeSize
 		old.validTill = time.Now().Add(expires)
-		lru.size = lru.size - oldSize + old.size
+		lru.size = lru.size - oldSize + nodeSize
 		lru.sendToTop(old)
 	} else {
 		//create and add Node

@@ -2,6 +2,7 @@ package dscache
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -542,6 +543,114 @@ func TestExpireExhaustiveTest4(t *testing.T) {
 	}
 }
 
+func TestWorkerExhaustive1(t *testing.T) {
+	var lru = newLRUCache(48, time.Second/10) //12*4
+	lru.set("d", "ddd", time.Second/5)        //12
+	lru.set("c", "ccc", time.Second*10)       //12
+	lru.set("b", "bbb", time.Second*10)       //12
+	lru.set("a", "aaa", time.Second*10)       //12
+
+	//Currently it's a->b->c->d
+	time.Sleep(time.Second / 2)
+
+	_, ok := lru.get("d")
+	if ok {
+		t.Error("Worker Test. Test 1. Did not expire.")
+	}
+
+	//Should be a->b->c
+	start := lru.listStart
+	if start.previous != nil || start.key != "a" || start.next.key != "b" || start.next.next.key != "c" || start.next.next.next != nil {
+		t.Error("Worker Test. Test 1. Incorrect ListStart.")
+	}
+	end := lru.listEnd
+	if end.next != nil || end.key != "c" || end.previous.key != "b" || end.previous.previous.key != "a" || end.previous.previous.previous != nil {
+		t.Error("Worker Test. Test 1. Incorrect ListEnd.")
+	}
+
+}
+
+func TestWorkerExhaustive2(t *testing.T) {
+	var lru = newLRUCache(48, time.Second/10) //12*4
+	lru.set("d", "ddd", time.Second*10)       //12
+	lru.set("c", "ccc", time.Second/5)        //12
+	lru.set("b", "bbb", time.Second*10)       //12
+	lru.set("a", "aaa", time.Second*10)       //12
+
+	//Currently it's a->b->c->d
+	time.Sleep(time.Second / 2)
+
+	_, ok := lru.get("c")
+	if ok {
+		t.Error("Worker Test. Test 2. Did not expire.")
+	}
+
+	//Should be a->b->c
+	start := lru.listStart
+	if start.previous != nil || start.key != "a" || start.next.key != "b" || start.next.next.key != "d" || start.next.next.next != nil {
+		t.Error("Worker Test. Test 2. Incorrect ListStart.")
+	}
+	end := lru.listEnd
+	if end.next != nil || end.key != "d" || end.previous.key != "b" || end.previous.previous.key != "a" || end.previous.previous.previous != nil {
+		t.Error("Worker Test. Test 2. Incorrect ListEnd.")
+	}
+
+}
+
+func TestWorkerExhaustive3(t *testing.T) {
+	var lru = newLRUCache(48, time.Second/10) //12*4
+	lru.set("d", "ddd", time.Second*10)       //12
+	lru.set("c", "ccc", time.Second*10)       //12
+	lru.set("b", "bbb", time.Second/5)        //12
+	lru.set("a", "aaa", time.Second*10)       //12
+
+	//Currently it's a->b->c->d
+	time.Sleep(time.Second / 2)
+
+	_, ok := lru.get("b")
+	if ok {
+		t.Error("Worker Test. Test 3. Did not expire.")
+	}
+
+	//Should be a->b->c
+	start := lru.listStart
+	if start.previous != nil || start.key != "a" || start.next.key != "c" || start.next.next.key != "d" || start.next.next.next != nil {
+		t.Error("Worker Test. Test 3. Incorrect ListStart.")
+	}
+	end := lru.listEnd
+	if end.next != nil || end.key != "d" || end.previous.key != "c" || end.previous.previous.key != "a" || end.previous.previous.previous != nil {
+		t.Error("Worker Test. Test 3. Incorrect ListEnd.")
+	}
+
+}
+
+func TestWorkerExhaustive4(t *testing.T) {
+	var lru = newLRUCache(48, time.Second/10) //12*4
+	lru.set("d", "ddd", time.Second*10)       //12
+	lru.set("c", "ccc", time.Second*10)       //12
+	lru.set("b", "bbb", time.Second*10)       //12
+	lru.set("a", "aaa", time.Second/5)        //12
+
+	//Currently it's a->b->c->d
+	time.Sleep(time.Second / 2)
+
+	_, ok := lru.get("a")
+	if ok {
+		t.Error("Worker Test. Test 4. Did not expire.")
+	}
+
+	//Should be a->b->c
+	start := lru.listStart
+	if start.previous != nil || start.key != "b" || start.next.key != "c" || start.next.next.key != "d" || start.next.next.next != nil {
+		t.Error("Worker Test. Test 4. Incorrect ListStart.")
+	}
+	end := lru.listEnd
+	if end.next != nil || end.key != "d" || end.previous.key != "c" || end.previous.previous.key != "b" || end.previous.previous.previous != nil {
+		t.Error("Worker Test. Test 4. Incorrect ListEnd.")
+	}
+
+}
+
 /*
 
 	Concurrent Tests
@@ -596,6 +705,52 @@ func (lru *lrucache) verifyUniqueKeys() error {
 	return nil
 }
 
+func (lru *lrucache) verifySize() error {
+
+	lru.mu.Lock()
+	start := lru.listStart
+	actualSize := uint64(0)
+
+	if start != nil {
+
+		//Get to last element of start
+		for start.next != nil {
+			actualSize += start.size
+			start = start.next
+		}
+
+		//Compare them
+		if actualSize > lru.maxsize {
+			lru.mu.Unlock()
+			err := fmt.Sprintf("actualSize: %v  > maxsize: %v --- size: %v", actualSize, lru.maxsize, lru.size)
+			return errors.New(err)
+		}
+	}
+
+	start = lru.listStart
+	realSize := uint64(0)
+
+	if start != nil {
+
+		//Get to last element of start
+		for start.next != nil {
+			realSize += uint64(len(start.key)) + uint64(len(start.payload)) + 8
+			start = start.next
+		}
+
+		//Compare them
+		if realSize > lru.maxsize {
+			lru.mu.Unlock()
+			err := fmt.Sprintf("realSize: %v  > maxsize: %v --- size: %v", realSize, lru.maxsize, lru.size)
+			return errors.New(err)
+		}
+	}
+
+	lru.mu.Unlock()
+
+	return nil
+}
+
 func TestInGoroutines(t *testing.T) {
 
 	var getSet = func(lru *lrucache, key string, val string) {
@@ -624,6 +779,11 @@ func TestInGoroutines(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	err = lru.verifySize()
+	if err != nil {
+		t.Error(err)
+	}
+
 }
 
 func TestInGoroutines2(t *testing.T) {
@@ -682,6 +842,10 @@ func TestInGoroutines2(t *testing.T) {
 		t.Error(err)
 	}
 	err = lru.verifyUniqueKeys()
+	if err != nil {
+		t.Error(err)
+	}
+	err = lru.verifySize()
 	if err != nil {
 		t.Error(err)
 	}
@@ -756,6 +920,10 @@ func TestInGoroutines3(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	err = lru.verifySize()
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 /*
@@ -817,6 +985,10 @@ func TestInGoroutines4(t *testing.T) {
 		t.Error(err)
 	}
 	err = lru.verifyUniqueKeys()
+	if err != nil {
+		t.Error(err)
+	}
+	err = lru.verifySize()
 	if err != nil {
 		t.Error(err)
 	}

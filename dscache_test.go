@@ -437,7 +437,7 @@ func Benchmark_GetSet_2(b *testing.B) {
 /*
 	#Keys = 140608
 	Payload Size = 10000
-	Total size of all keys ~ 1.4G
+	Total size of everything ~ 1.4G
 
 	Ascci 'A' = 65
 	Ascci 'z' = 122

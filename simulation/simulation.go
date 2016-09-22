@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"math/rand"
 	"runtime"
@@ -10,23 +11,18 @@ import (
 	"../"
 )
 
-/*
-
-Simulate actual usage to test memory consumption.
-
-*/
-
 var tenChars = "0123456789"
 var hundredChars = tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars
 var thousandChars = hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars
 var tenThousandChars = thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars
 
 /*
-  key number: 7311616
+  Number of Keys: 7311616
+	All Payloads Size: [35, 70] GB
 */
-func generateKeys() [7311616]string {
+func generateKeys4() []string {
 	var letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	var keyArr [7311616]string
+	keyArr := make([]string, 7311616, 7311616)
 	count := 0
 	for i := 0; i < len(letters); i++ {
 		for j := 0; j < len(letters); j++ {
@@ -36,6 +32,26 @@ func generateKeys() [7311616]string {
 					keyArr[count] = tmpKey
 					count++
 				}
+			}
+		}
+	}
+	return keyArr
+}
+
+/*
+	Number of Keys: 140608
+	All Keys Size: [0.7, 1.4] GB
+*/
+func generateKeys3() []string {
+	var letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	keyArr := make([]string, 140608, 140608)
+	count := 0
+	for i := 0; i < len(letters); i++ {
+		for j := 0; j < len(letters); j++ {
+			for k := 0; k < len(letters); k++ {
+				var tmpKey = letters[i:i+1] + letters[j:j+1] + letters[k:k+1]
+				keyArr[count] = tmpKey
+				count++
 			}
 		}
 	}
@@ -53,33 +69,61 @@ func getSet(ds *dscache.Dscache, key string, failures *uint64) {
 	}
 }
 
+/**
+
+**/
+
 func main() {
 
-	ds := dscache.Custom(4*dscache.GB, 32, time.Second+time.Second/2, time.Second/2, nil)
+	verify := flag.Bool("verify", false, "Wether to run on Verify or Simulation Mode.")
+	keySize := flag.Int("keySize", 4, "Keysize, valid options are 3 or 4.")
+	dsMaxSize := flag.Float64("dsMaxSize", 4.0, "ds Maxsize, in GB, may take floats.")
+	dsLists := flag.Int("dsLists", 32, "ds Number Of Lists.")
+	dsGCSleep := flag.Float64("dsGCSleep", 1.0, "ds GC Sleep, in Seconds, may take floats.")
+	dsWorkerSleep := flag.Float64("dsWorkerSleep", 0.5, "ds Worker Sleep, in Seconds, may take floats.")
+	numOps := flag.Int("numOps", 1000000, "Number of Ops to run.")
+	numGoRoutines := flag.Int("numGoRoutines", 64, "Number of Goroutines to be accessing the cache simultaneously.")
 
-	keyArr := generateKeys()
+	flag.Parse()
 
-	var failures uint64
-	numberOfOps := 100000000
-	numberOfRoutines := 128
-	var runOps = func(ds *dscache.Dscache, keyArr *[7311616]string, failures *uint64) {
-		for i := 0; i < numberOfOps; i++ {
-			key := keyArr[rand.Intn(7311616)]
+	ds := dscache.Custom(uint64(*dsMaxSize*float64(dscache.GB)), *dsLists, time.Duration(float64(time.Second)**dsGCSleep), time.Duration(float64(time.Second)**dsWorkerSleep), nil)
+
+	var keyNumIndexes int
+
+	switch *keySize {
+	case 3:
+		keyNumIndexes = 140608
+	default:
+		keyNumIndexes = 7311616
+	}
+
+	keyArr := make([]string, keyNumIndexes, keyNumIndexes)
+
+	switch *keySize {
+	case 3:
+		keyArr = generateKeys3()
+	default:
+		keyArr = generateKeys4()
+	}
+
+	var runOps = func(ds *dscache.Dscache, keyArr []string) {
+		for i := 0; i < *numOps; i++ {
+			key := keyArr[rand.Intn(keyNumIndexes)]
 			getSet(ds, key, failures)
-			/*			if i%100 == 0 {
-							time.Sleep(time.Second / 5)
-						}
-			*/
 		}
 	}
 
-	for i := 0; i < numberOfRoutines; i++ {
-		go runOps(ds, &keyArr, &failures)
+	for i := 0; i < *numGoRoutines; i++ {
+		go runOps(ds, keyArr)
 	}
 
 	var memStats runtime.MemStats
 	for i := 0; i < 10000; i++ {
-		//		ds.Verify()
+
+		if *verify {
+			ds.Verify()
+		}
+
 		runtime.ReadMemStats(&memStats)
 
 		fmt.Println("--------------------------------------------")

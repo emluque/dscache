@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"runtime"
-	"sync/atomic"
 	"time"
 
 	"../"
@@ -58,14 +57,13 @@ func generateKeys3() []string {
 	return keyArr
 }
 
-func getSet(ds *dscache.Dscache, key string, failures *uint64) {
+func getSet(ds *dscache.Dscache, key string) {
 	_, ok := ds.Get(key)
 	if !ok {
 		rand.Seed(time.Now().UnixNano())
 		randomLength := rand.Intn(5000) + 4999
 		str := tenThousandChars[0:randomLength] + "  "
 		ds.Set(key, str, time.Second*60)
-		atomic.AddUint64(failures, 1)
 	}
 }
 
@@ -109,7 +107,7 @@ func main() {
 	var runOps = func(ds *dscache.Dscache, keyArr []string) {
 		for i := 0; i < *numOps; i++ {
 			key := keyArr[rand.Intn(keyNumIndexes)]
-			getSet(ds, key, failures)
+			getSet(ds, key)
 		}
 	}
 
@@ -142,6 +140,7 @@ func main() {
 		fmt.Println("ds.NumObjects:\t\t", ds.NumObjects())
 		fmt.Println("ds.NumGets:\t\t", ds.NumGets)
 		fmt.Println("ds.NumSets:\t\t", ds.NumSets)
+		fmt.Printf("ds.FailureRate:\t\t%.3f\n", ds.FailureRate())
 		fmt.Println("-----")
 		fmt.Println("NextGC:\t\t", memStats.NextGC)
 		fmt.Println("LastGC:\t\t", memStats.LastGC)

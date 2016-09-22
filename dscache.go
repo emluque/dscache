@@ -152,3 +152,10 @@ func (ds *Dscache) NumObjects() uint32 {
 	}
 	return numObjects
 }
+
+func (ds *Dscache) FailureRate() float64 {
+	g := ds.NumGets
+	s := ds.NumSets
+	t := g + s
+	return float64(s) / float64(t)
+}

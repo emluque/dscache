@@ -55,13 +55,13 @@ func getSet(ds *dscache.Dscache, key string, failures *uint64) {
 
 func main() {
 
-	ds := dscache.Custom(4*dscache.GB, 32, time.Second/2, nil)
+	ds := dscache.Custom(4*dscache.GB, 32, time.Second+time.Second/2, time.Second/2, nil)
 
 	keyArr := generateKeys()
 
 	var failures uint64
 	numberOfOps := 100000000
-	numberOfRoutines := 16
+	numberOfRoutines := 128
 	var runOps = func(ds *dscache.Dscache, keyArr *[7311616]string, failures *uint64) {
 		for i := 0; i < numberOfOps; i++ {
 			key := keyArr[rand.Intn(7311616)]
@@ -103,7 +103,6 @@ func main() {
 		fmt.Println("LastGC:\t\t", memStats.LastGC)
 		fmt.Println("NumGC:\t\t", memStats.NumGC)
 
-		runtime.GC()
 		time.Sleep(time.Second * 1)
 	}
 

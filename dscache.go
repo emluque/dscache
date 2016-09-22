@@ -2,6 +2,7 @@ package dscache
 
 import (
 	"fmt"
+	"runtime"
 	"sync/atomic"
 	"time"
 )
@@ -55,10 +56,14 @@ func New(maxsize uint64) *Dscache {
 	return ds
 }
 
-func Custom(maxsize uint64, numberOfLists int, workerSleep time.Duration, getListNumber func(string) int) *Dscache {
+func Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Duration, workerSleep time.Duration, getListNumber func(string) int) *Dscache {
 
 	if maxsize == 0 {
 		panic("Building dscache with maxsize of 0.")
+	}
+
+	if gcWorkerSleep > 0 && gcWorkerSleep < time.Second/5 {
+		panic("Building dscache with gcWorkerSleep < 1/5 of a Second.")
 	}
 
 	if numberOfLists == 0 {
@@ -79,6 +84,10 @@ func Custom(maxsize uint64, numberOfLists int, workerSleep time.Duration, getLis
 		ds.buckets[i] = newLRUCache(maxsize/uint64(numberOfLists), workerSleep)
 	}
 	ds.getListNumber = getListNumber
+
+	if gcWorkerSleep > 0 {
+		go gcWorker(gcWorkerSleep)
+	}
 	return ds
 
 }
@@ -101,6 +110,13 @@ func (ds *Dscache) Get(key string) (string, bool) {
 func (ds *Dscache) Purge(key string) bool {
 	list := ds.getListNumber(key)
 	return ds.buckets[list].purge(key)
+}
+
+func gcWorker(gcSleepTime time.Duration) {
+	for {
+		time.Sleep(gcSleepTime)
+		runtime.GC()
+	}
 }
 
 func (ds *Dscache) Inspect() {

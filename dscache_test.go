@@ -12,7 +12,7 @@ func TestDscacheBasicGetSet(t *testing.T) {
 	var getListNumber = func(key string) int {
 		return int(key[len(key)-1]) % 32
 	}
-	ds := Custom(316368, 32, 0, getListNumber)
+	ds := Custom(316368, 32, 0, 0, getListNumber)
 
 	ds.Set("a", "a", time.Second*10)
 
@@ -37,7 +37,7 @@ func TestDscacheSetOfExistingElement(t *testing.T) {
 	var getListNumber = func(key string) int {
 		return int(key[len(key)-1]) % 32
 	}
-	ds := Custom(316368, 32, 0, getListNumber)
+	ds := Custom(316368, 32, 0, 0, getListNumber)
 
 	ds.Set("d", "ddd", time.Second*10) //4 + 8
 	ds.Set("c", "ccc", time.Second*10) //4 + 8
@@ -56,7 +56,7 @@ func TestDscachePurge(t *testing.T) {
 	var getListNumber = func(key string) int {
 		return int(key[len(key)-1]) % 32
 	}
-	ds := Custom(316368, 32, 0, getListNumber)
+	ds := Custom(316368, 32, 0, 0, getListNumber)
 
 	ds.Set("d", "ddd", time.Second*10) //4 + 8
 	ds.Set("c", "ccc", time.Second*10) //4 + 8
@@ -76,7 +76,7 @@ func TestDscacheExpire(t *testing.T) {
 	var getListNumber = func(key string) int {
 		return int(key[len(key)-1]) % 32
 	}
-	ds := Custom(316368, 32, 0, getListNumber)
+	ds := Custom(316368, 32, 0, 0, getListNumber)
 
 	ds.Set("d", "ddd", time.Second/5)  //12
 	ds.Set("c", "ccc", time.Second*10) //12
@@ -127,7 +127,7 @@ func Benchmark_Get_1(b *testing.B) {
 	var getListNumber = func(key string) int {
 		return int(key[len(key)-1]) % 32
 	}
-	ds := Custom(316*KB, 32, time.Second/2, getListNumber)
+	ds := Custom(316*KB, 32, 0, time.Second/2, getListNumber)
 
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
@@ -183,7 +183,7 @@ func Benchmark_Get_2(b *testing.B) {
 
 	rand.Seed(time.Now().UnixNano())
 
-	ds := Custom(100*MB, 32, time.Second/2, nil)
+	ds := Custom(100*MB, 32, 0, time.Second/2, nil)
 
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
@@ -229,7 +229,7 @@ func Benchmark_Set_1(b *testing.B) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	ds := Custom(316*KB, 32, time.Second/2, nil)
+	ds := Custom(316*KB, 32, 0, time.Second/2, nil)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
@@ -282,7 +282,7 @@ func Benchmark_Set_2(b *testing.B) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	ds := Custom(100*MB, 32, time.Second/2, nil)
+	ds := Custom(100*MB, 32, 0, time.Second/2, nil)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
@@ -345,7 +345,7 @@ func Benchmark_GetSet_1(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := Custom(210*KB, 32, time.Second/2, nil)
+	ds := Custom(210*KB, 32, 0, time.Second/2, nil)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
@@ -414,7 +414,7 @@ func Benchmark_GetSet_2(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := Custom(100*MB, 32, time.Second/2, nil)
+	ds := Custom(100*MB, 32, 0, time.Second/2, nil)
 	keyArr := generateKeys()
 	for i := range keyArr {
 		ds.Set(keyArr[i], tenThousandChars, time.Second*10)
@@ -477,7 +477,7 @@ func Benchmark_GetSet_3(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := Custom(500*MB, 32, time.Second/2, nil)
+	ds := Custom(500*MB, 32, 0, time.Second/2, nil)
 	keyArr := generateKeys()
 	for i := range keyArr {
 		ds.Set(keyArr[i], tenThousandChars, time.Second*10)
@@ -535,7 +535,7 @@ func Benchmark_GetSet_4(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := Custom(2*GB, 32, time.Second/2, nil)
+	ds := Custom(2*GB, 32, 0, time.Second/2, nil)
 	keyArr := generateKeys()
 	for i := range keyArr {
 		ds.Set(keyArr[i], tenThousandChars, time.Second*10)
@@ -602,7 +602,7 @@ func Benchmark_GetSetPurge_1(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := Custom(210*KB, 32, time.Second/2, nil)
+	ds := Custom(210*KB, 32, 0, time.Second/2, nil)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
@@ -676,7 +676,7 @@ func Benchmark_GetSetPurge_3(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := Custom(500*MB, 32, time.Second/2, nil)
+	ds := Custom(500*MB, 32, 0, time.Second/2, nil)
 	keyArr := generateKeys()
 	for i := range keyArr {
 		ds.Set(keyArr[i], tenThousandChars, time.Second*10)
@@ -737,7 +737,7 @@ func Benchmark_GetSetExpire_1(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := Custom(210*KB, 32, time.Second/2, nil)
+	ds := Custom(210*KB, 32, 0, time.Second/2, nil)
 	testMap := generateKeysPlusValues()
 	var keyArr [140608]string
 	c := 0
@@ -806,7 +806,7 @@ func Benchmark_GetSetExpire_3(b *testing.B) {
 
 	b.StopTimer()
 	rand.Seed(time.Now().UnixNano())
-	ds := Custom(500*MB, 32, time.Second/2, nil)
+	ds := Custom(500*MB, 32, 0, time.Second/2, nil)
 	keyArr := generateKeys()
 	for i := range keyArr {
 		ds.Set(keyArr[i], tenThousandChars, time.Second*3/10)

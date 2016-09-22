@@ -1,10 +1,16 @@
 package dscache
 
-import "time"
+import (
+	"fmt"
+	"sync/atomic"
+	"time"
+)
 
 type Dscache struct {
 	buckets       []*lrucache
 	getListNumber func(string) int
+	NumGets       uint64
+	NumSets       uint64
 }
 
 /*
@@ -30,7 +36,8 @@ const (
 	MB
 	GB
 	TB
-	PB
+
+//	PB
 )
 
 func New(maxsize uint64) *Dscache {
@@ -78,15 +85,54 @@ func Custom(maxsize uint64, numberOfLists int, workerSleep time.Duration, getLis
 
 func (ds *Dscache) Set(key, payload string, expires time.Duration) error {
 	list := ds.getListNumber(key)
+	atomic.AddUint64(&ds.NumSets, 1)
 	return ds.buckets[list].set(key, payload, expires)
 }
 
 func (ds *Dscache) Get(key string) (string, bool) {
 	list := ds.getListNumber(key)
-	return ds.buckets[list].get(key)
+	payload, ok := ds.buckets[list].get(key)
+	if ok {
+		atomic.AddUint64(&ds.NumGets, 1)
+	}
+	return payload, ok
 }
 
 func (ds *Dscache) Purge(key string) bool {
 	list := ds.getListNumber(key)
 	return ds.buckets[list].purge(key)
+}
+
+func (ds *Dscache) Inspect() {
+	for i := 0; i < len(ds.buckets); i++ {
+		ds.buckets[i].mu.Lock()
+		fmt.Println("Bucket: ", i, " -- Maxize: ", ds.buckets[i].maxsize, " -- Size: ", ds.buckets[i].size)
+		ds.buckets[i].mu.Unlock()
+	}
+}
+
+func (ds *Dscache) Verify() {
+	for i := 0; i < len(ds.buckets); i++ {
+		err := ds.buckets[i].verifyEndAndStart()
+		if err != nil {
+			fmt.Println(err)
+		}
+		err = ds.buckets[i].verifySize()
+		if err != nil {
+			fmt.Println(err)
+		}
+		err = ds.buckets[i].verifyUniqueKeys()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+}
+
+func (ds *Dscache) NumObjects() uint32 {
+	numObjects := uint32(0)
+	for i := 0; i < len(ds.buckets); i++ {
+		//		numObjects += ds.buckets[i].numObjects
+		numObjects += uint32(len(ds.buckets[i].keys))
+	}
+	return numObjects
 }

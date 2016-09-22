@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 	"time"
+	"unsafe"
 )
 
 type node struct {
@@ -16,13 +17,14 @@ type node struct {
 }
 
 type lrucache struct {
-	keys        map[string]*node
-	listStart   *node
-	listEnd     *node
-	size        uint64
-	maxsize     uint64
-	workerSleep time.Duration
-	mu          sync.Mutex
+	keys         map[string]*node
+	listStart    *node
+	listEnd      *node
+	size         uint64
+	maxsize      uint64
+	workerSleep  time.Duration
+	mu           sync.Mutex
+	nodeBaseSize uint64
 }
 
 var ErrMaxsize = errors.New("Value is Bigger than Allowed Maxsize")
@@ -33,6 +35,7 @@ func newLRUCache(maxsize uint64, workerSleep time.Duration) *lrucache {
 	lru.size = 0
 	lru.maxsize = maxsize
 	lru.workerSleep = workerSleep
+	lru.nodeBaseSize = lru.calculateBaseNodeSize()
 	go lru.worker()
 	return lru
 }
@@ -40,7 +43,7 @@ func newLRUCache(maxsize uint64, workerSleep time.Duration) *lrucache {
 func (lru *lrucache) set(key, payload string, expires time.Duration) error {
 
 	//Verify Size
-	nodeSize := (uint64(len(key)) + uint64(len(payload))) + 8 //Size of node structure is 8
+	nodeSize := (uint64(len(key)) + uint64(len(payload))) + lru.nodeBaseSize //Size of node structure is 8
 	if nodeSize > lru.maxsize {
 		//Node Exceeds Maxsize
 		return ErrMaxsize
@@ -179,6 +182,12 @@ func (lru *lrucache) delete(n *node) {
 	n.previous = nil
 	n.next = nil
 	lru.size -= n.size
+}
+
+func (lru *lrucache) calculateBaseNodeSize() uint64 {
+	n := new(node)
+	size := uint64(unsafe.Sizeof(n.key)) + uint64(unsafe.Sizeof(n.payload)) + uint64(unsafe.Sizeof(n.previous)) + uint64(unsafe.Sizeof(n.next)) + uint64(unsafe.Sizeof(n.size)) + uint64(unsafe.Sizeof(n.validTill))
+	return size
 }
 
 func (lru *lrucache) verifyEndAndStart() error {

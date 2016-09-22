@@ -12,31 +12,33 @@ func TestSize(t *testing.T) {
 		t.Error("lrucache.size not initialized in 0.")
 	}
 
+	nodeSize := lru.calculateBaseNodeSize()
+
 	var expectedSize uint64
 
 	lru.set("a", "123", time.Second*10) //4
-	expectedSize = (4 + 8)
+	expectedSize = (4 + nodeSize)
 
 	if lru.size != expectedSize {
 		t.Error("lrucache.size not adding correctly. Test 1")
 	}
 
 	lru.set("bb", "12345678", time.Second*10) //+10
-	expectedSize += (10 + 8)
+	expectedSize += (10 + nodeSize)
 
 	if lru.size != expectedSize {
 		t.Error("lrucache.size not adding correctly. Test 2")
 	}
 
 	lru.set("1234567890", "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", time.Second*10) //+100
-	expectedSize += (100 + 8)
+	expectedSize += (100 + nodeSize)
 
 	if lru.size != expectedSize {
 		t.Error("lrucache.size not adding correctly. Test 3")
 	}
 
 	lru.set("b234567890", "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", time.Second*10) //+1010
-	expectedSize += (1010 + 8)
+	expectedSize += (1010 + nodeSize)
 
 	if lru.size != expectedSize {
 		t.Error("lrucache.size not adding correctly. Test 4")
@@ -150,11 +152,14 @@ func TestLRUOrderInsertPlusVariousGets(t *testing.T) {
 }
 
 func TestMaxsize(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //
-	lru.set("a", "abc", time.Second*10) //4 + 8
-	lru.set("b", "abc", time.Second*10) //4 + 8
-	lru.set("c", "abc", time.Second*10) //4 + 8
-	lru.set("d", "abc", time.Second*10) //4 + 8
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
+	lru.set("a", "abc", time.Second*10) //4
+	lru.set("b", "abc", time.Second*10) //4
+	lru.set("c", "abc", time.Second*10) //4
+	lru.set("d", "abc", time.Second*10) //4
 
 	start := lru.listStart
 	if start.key != "d" || start.next.key != "c" || start.next.next.key != "b" || start.next.next.next.key != "a" {
@@ -189,7 +194,10 @@ func TestMaxsize(t *testing.T) {
 }
 
 func TestLRUOrderExhaustiveTest0(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //12 * 4
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
 	lru.set("d", "ddd", time.Second*10) //4 + 8
 	lru.set("c", "ccc", time.Second*10) //4 + 8
 	lru.set("b", "bbb", time.Second*10) //4 + 8
@@ -207,7 +215,10 @@ func TestLRUOrderExhaustiveTest0(t *testing.T) {
 }
 
 func TestLRUOrderExhaustiveTest1(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //12 * 4
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
 	lru.set("d", "ddd", time.Second*10) //4 + 8
 	lru.set("c", "ccc", time.Second*10) //4 + 8
 	lru.set("b", "bbb", time.Second*10) //4 + 8
@@ -231,7 +242,10 @@ func TestLRUOrderExhaustiveTest1(t *testing.T) {
 }
 
 func TestLRUOrderExhaustiveTest2(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //12 * 4
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
 	lru.set("d", "ddd", time.Second*10) //4 + 8
 	lru.set("c", "ccc", time.Second*10) //4 + 8
 	lru.set("b", "bbb", time.Second*10) //4 + 8
@@ -255,7 +269,10 @@ func TestLRUOrderExhaustiveTest2(t *testing.T) {
 }
 
 func TestLRUOrderExhaustiveTest3(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //12 * 4
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
 	lru.set("d", "ddd", time.Second*10) //4 + 8
 	lru.set("c", "ccc", time.Second*10) //4 + 8
 	lru.set("b", "bbb", time.Second*10) //4 + 8
@@ -279,7 +296,10 @@ func TestLRUOrderExhaustiveTest3(t *testing.T) {
 }
 
 func TestLRUOrderExhaustiveTest4(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //12 * 4
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
 	lru.set("d", "ddd", time.Second*10) //4 + 8
 	lru.set("c", "ccc", time.Second*10) //4 + 8
 	lru.set("b", "bbb", time.Second*10) //4 + 8
@@ -303,7 +323,10 @@ func TestLRUOrderExhaustiveTest4(t *testing.T) {
 }
 
 func TestSetOfExistingElement(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //12 * 4
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
 	lru.set("d", "ddd", time.Second*10) //4 + 8
 	lru.set("c", "ccc", time.Second*10) //4 + 8
 	lru.set("b", "bbb", time.Second*10) //4 + 8
@@ -329,7 +352,10 @@ func TestSetOfExistingElement(t *testing.T) {
 }
 
 func TestMaxsizeVariousSetsIncludingResets(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //12*4
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
 	lru.set("a", "aaa", time.Second*10) //12
 	lru.set("b", "bbb", time.Second*10) //12
 	lru.set("c", "ccc", time.Second*10) //12
@@ -353,7 +379,10 @@ func TestMaxsizeVariousSetsIncludingResets(t *testing.T) {
 }
 
 func TestPurgeExhaustiveTest1(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //12 * 4
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
 	lru.set("d", "ddd", time.Second*10) //4 + 8
 	lru.set("c", "ccc", time.Second*10) //4 + 8
 	lru.set("b", "bbb", time.Second*10) //4 + 8
@@ -374,7 +403,10 @@ func TestPurgeExhaustiveTest1(t *testing.T) {
 }
 
 func TestPurgeExhaustiveTest2(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //12 * 4
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
 	lru.set("d", "ddd", time.Second*10) //4 + 8
 	lru.set("c", "ccc", time.Second*10) //4 + 8
 	lru.set("b", "bbb", time.Second*10) //4 + 8
@@ -395,7 +427,10 @@ func TestPurgeExhaustiveTest2(t *testing.T) {
 }
 
 func TestPurgeExhaustiveTest3(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //12 * 4
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
 	lru.set("d", "ddd", time.Second*10) //4 + 8
 	lru.set("c", "ccc", time.Second*10) //4 + 8
 	lru.set("b", "bbb", time.Second*10) //4 + 8
@@ -416,7 +451,10 @@ func TestPurgeExhaustiveTest3(t *testing.T) {
 }
 
 func TestPurgeExhaustiveTest4(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //12 * 4
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
 	lru.set("d", "ddd", time.Second*10) //4 + 8
 	lru.set("c", "ccc", time.Second*10) //4 + 8
 	lru.set("b", "bbb", time.Second*10) //4 + 8
@@ -437,7 +475,10 @@ func TestPurgeExhaustiveTest4(t *testing.T) {
 }
 
 func TestExpireExhaustiveTest1(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //12*4
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
 	lru.set("d", "ddd", time.Second/5)  //12
 	lru.set("c", "ccc", time.Second*10) //12
 	lru.set("b", "bbb", time.Second*10) //12
@@ -464,7 +505,10 @@ func TestExpireExhaustiveTest1(t *testing.T) {
 }
 
 func TestExpireExhaustiveTest2(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //12*4
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
 	lru.set("d", "ddd", time.Second*10) //4
 	lru.set("c", "ccc", time.Second/5)  //4
 	lru.set("b", "bbb", time.Second*10) //4
@@ -490,7 +534,10 @@ func TestExpireExhaustiveTest2(t *testing.T) {
 }
 
 func TestExpireExhaustiveTest3(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //12*4
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
 	lru.set("d", "ddd", time.Second*10) //4
 	lru.set("c", "ccc", time.Second*10) //4
 	lru.set("b", "bbb", time.Second/5)  //4
@@ -516,7 +563,10 @@ func TestExpireExhaustiveTest3(t *testing.T) {
 }
 
 func TestExpireExhaustiveTest4(t *testing.T) {
-	var lru = newLRUCache(48, 0)        //12*4
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
 	lru.set("d", "ddd", time.Second*10) //4
 	lru.set("c", "ccc", time.Second*10) //4
 	lru.set("b", "bbb", time.Second*10) //4
@@ -542,11 +592,14 @@ func TestExpireExhaustiveTest4(t *testing.T) {
 }
 
 func TestWorkerExhaustive1(t *testing.T) {
-	var lru = newLRUCache(48, time.Second/10) //12*4
-	lru.set("d", "ddd", time.Second/5)        //12
-	lru.set("c", "ccc", time.Second*10)       //12
-	lru.set("b", "bbb", time.Second*10)       //12
-	lru.set("a", "aaa", time.Second*10)       //12
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
+	lru.set("d", "ddd", time.Second/5)  //12
+	lru.set("c", "ccc", time.Second*10) //12
+	lru.set("b", "bbb", time.Second*10) //12
+	lru.set("a", "aaa", time.Second*10) //12
 
 	//Currently it's a->b->c->d
 	time.Sleep(time.Second / 2)
@@ -569,11 +622,14 @@ func TestWorkerExhaustive1(t *testing.T) {
 }
 
 func TestWorkerExhaustive2(t *testing.T) {
-	var lru = newLRUCache(48, time.Second/10) //12*4
-	lru.set("d", "ddd", time.Second*10)       //12
-	lru.set("c", "ccc", time.Second/5)        //12
-	lru.set("b", "bbb", time.Second*10)       //12
-	lru.set("a", "aaa", time.Second*10)       //12
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
+	lru.set("d", "ddd", time.Second*10) //12
+	lru.set("c", "ccc", time.Second/5)  //12
+	lru.set("b", "bbb", time.Second*10) //12
+	lru.set("a", "aaa", time.Second*10) //12
 
 	//Currently it's a->b->c->d
 	time.Sleep(time.Second / 2)
@@ -596,11 +652,14 @@ func TestWorkerExhaustive2(t *testing.T) {
 }
 
 func TestWorkerExhaustive3(t *testing.T) {
-	var lru = newLRUCache(48, time.Second/10) //12*4
-	lru.set("d", "ddd", time.Second*10)       //12
-	lru.set("c", "ccc", time.Second*10)       //12
-	lru.set("b", "bbb", time.Second/5)        //12
-	lru.set("a", "aaa", time.Second*10)       //12
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
+	lru.set("d", "ddd", time.Second*10) //12
+	lru.set("c", "ccc", time.Second*10) //12
+	lru.set("b", "bbb", time.Second/5)  //12
+	lru.set("a", "aaa", time.Second*10) //12
 
 	//Currently it's a->b->c->d
 	time.Sleep(time.Second / 2)
@@ -623,11 +682,14 @@ func TestWorkerExhaustive3(t *testing.T) {
 }
 
 func TestWorkerExhaustive4(t *testing.T) {
-	var lru = newLRUCache(48, time.Second/10) //12*4
-	lru.set("d", "ddd", time.Second*10)       //12
-	lru.set("c", "ccc", time.Second*10)       //12
-	lru.set("b", "bbb", time.Second*10)       //12
-	lru.set("a", "aaa", time.Second/5)        //12
+	var lru = newLRUCache(48, 0)
+	nodeSize := lru.calculateBaseNodeSize()
+	lru.maxsize = (nodeSize + 4) * 4
+
+	lru.set("d", "ddd", time.Second*10) //12
+	lru.set("c", "ccc", time.Second*10) //12
+	lru.set("b", "bbb", time.Second*10) //12
+	lru.set("a", "aaa", time.Second/5)  //12
 
 	//Currently it's a->b->c->d
 	time.Sleep(time.Second / 2)

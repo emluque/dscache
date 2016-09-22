@@ -2,9 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"math/rand"
-	"runtime"
 	"time"
 
 	"../"
@@ -115,37 +113,36 @@ func main() {
 		go runOps(ds, keyArr)
 	}
 
-	var memStats runtime.MemStats
+	//	var memStats runtime.MemStats
 	for i := 0; i < 10000; i++ {
-
 		if *verify {
 			ds.Verify()
 		}
+		/*
+			runtime.ReadMemStats(&memStats)
 
-		runtime.ReadMemStats(&memStats)
-
-		fmt.Println("--------------------------------------------")
-		fmt.Println("Alloc:\t\t\t", memStats.Alloc)
-		fmt.Println("Sys:\t\t\t", memStats.Sys)
-		fmt.Println("-----")
-		fmt.Println("TotalAlloc:\t\t", memStats.TotalAlloc)
-		fmt.Println("-----")
-		fmt.Println("HeapAlloc:\t\t", memStats.HeapAlloc)
-		fmt.Println("HeapSys:\t\t", memStats.HeapSys)
-		fmt.Println("HeapIdle:\t\t", memStats.HeapIdle)
-		fmt.Println("HeapInuse:\t\t", memStats.HeapInuse)
-		fmt.Println("HeapReleased:\t\t", memStats.HeapReleased)
-		fmt.Println("HeapObjects:\t\t", memStats.HeapObjects)
-		fmt.Println("-----")
-		fmt.Println("ds.NumObjects:\t\t", ds.NumObjects())
-		fmt.Println("ds.NumGets:\t\t", ds.NumGets)
-		fmt.Println("ds.NumSets:\t\t", ds.NumSets)
-		fmt.Printf("ds.FailureRate:\t\t%.3f\n", ds.FailureRate())
-		fmt.Println("-----")
-		fmt.Println("NextGC:\t\t", memStats.NextGC)
-		fmt.Println("LastGC:\t\t", memStats.LastGC)
-		fmt.Println("NumGC:\t\t", memStats.NumGC)
-
+			fmt.Println("--------------------------------------------")
+			fmt.Println("Alloc:\t\t\t", memStats.Alloc)
+			fmt.Println("Sys:\t\t\t", memStats.Sys)
+			fmt.Println("-----")
+			fmt.Println("TotalAlloc:\t\t", memStats.TotalAlloc)
+			fmt.Println("-----")
+			fmt.Println("HeapAlloc:\t\t", memStats.HeapAlloc)
+			fmt.Println("HeapSys:\t\t", memStats.HeapSys)
+			fmt.Println("HeapIdle:\t\t", memStats.HeapIdle)
+			fmt.Println("HeapInuse:\t\t", memStats.HeapInuse)
+			fmt.Println("HeapReleased:\t\t", memStats.HeapReleased)
+			fmt.Println("HeapObjects:\t\t", memStats.HeapObjects)
+			fmt.Println("-----")
+			fmt.Println("ds.NumObjects:\t\t", ds.NumObjects())
+			fmt.Println("ds.NumGets:\t\t", ds.NumGets)
+			fmt.Println("ds.NumSets:\t\t", ds.NumSets)
+			fmt.Printf("ds.FailureRate:\t\t%.3f\n", ds.FailureRate())
+			fmt.Println("-----")
+			fmt.Println("NextGC:\t\t", memStats.NextGC)
+			fmt.Println("LastGC:\t\t", memStats.LastGC)
+			fmt.Println("NumGC:\t\t", memStats.NumGC)
+		*/
 		time.Sleep(time.Second * 1)
 	}
 

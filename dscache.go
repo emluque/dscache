@@ -31,7 +31,7 @@ const defaultWorkerSleep = time.Second
 // of Key, adds them and then returns the result % numberOfLists
 var defaultGetListNumber = func(numLists int) func(string) int {
 	return func(key string) int {
-		return int(key[len(key)-1]+key[len(key)-2]) % numLists
+		return int((key[len(key)-1]-48)+((key[len(key)-2]-48)*10)) % numLists
 	}
 }
 

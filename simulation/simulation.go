@@ -1,3 +1,40 @@
+// Copyright 2016 Emiliano Martínez Luque. All rights reserved.
+// Use of this source code is governed by a MIT
+// license that can be found in the LICENSE file.
+
+/*
+	Script to run simulations of dscache usage to test how it uses memory
+
+	Flags:
+
+		-verify boolean
+			true 		verify all buckets of dscache every Second
+			false 	print memory stats every second
+
+		-keySize int
+			Number of keys to be used.
+				Considering each key may take a paylod from 5000 to 10000 chars,
+				the number of possible keys deterimines the total size of all cacheable
+				elements. Which combined with dsMaxSize (the size of the cache) will deterimine
+				get failure rate.
+
+		-dsMaxSize float64
+			Maximum size in GB of the cache.
+
+		-dsLists	int
+			Number of buckets in dscache.
+
+		-dsGCSleep float64
+			Seconds to wait before running GC worker in dscache.
+
+		-dsWorkerSleep float64
+		Seconds to wait before running expiration cleanup worker in each bucket.
+
+		-numGoRoutines int
+			Number of goroutines to be running get/set operations.
+
+*/
+
 package main
 
 import (
@@ -13,15 +50,62 @@ import (
 	"../"
 )
 
+// Create a constant string with 10000 chars
 const tenChars = "0123456789"
 const hundredChars = tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars
 const thousandChars = hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars
 const tenThousandChars = thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars
 
-/*
-  Number of Keys: 7311616
-	All Payloads Size: [35, 70] GB
-*/
+func main() {
+
+	verify := flag.Bool("verify", false, "Wether to run on Verify or Simulation Mode.")
+	keySize := flag.Int("keySize", 7311616, "Number of Keys to use in testing.")
+	dsMaxSize := flag.Float64("dsMaxSize", 4.0, "ds Maxsize, in GB, may take floats.")
+	dsLists := flag.Int("dsLists", 32, "ds Number Of Lists.")
+	dsGCSleep := flag.Float64("dsGCSleep", 1.0, "ds GC Sleep, in Seconds, may take floats.")
+	dsWorkerSleep := flag.Float64("dsWorkerSleep", 0.5, "ds Worker Sleep, in Seconds, may take floats.")
+	numGoRoutines := flag.Int("numGoRoutines", 64, "Number of Goroutines to be accessing the cache simultaneously.")
+	flag.Parse()
+
+	printConf(*verify, *keySize, *dsMaxSize, *dsLists, *dsGCSleep, *dsWorkerSleep, *numGoRoutines)
+
+	ds := dscache.Custom(uint64(*dsMaxSize*float64(dscache.GB)), *dsLists, time.Duration(float64(time.Second)**dsGCSleep), time.Duration(float64(time.Second)**dsWorkerSleep), nil)
+
+	keyArr := generateKeys()
+
+	// Launch Goroutines that do the actual work.
+	for i := 0; i < *numGoRoutines; i++ {
+		go runOps(ds, *keySize, &keyArr)
+	}
+
+	var i int
+	var memStats runtime.MemStats
+
+	// Register Signal for exiting program. Ctrl C on Linux.
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		printExit(i, &memStats, ds)
+		printConf(*verify, *keySize, *dsMaxSize, *dsLists, *dsGCSleep, *dsWorkerSleep, *numGoRoutines)
+		os.Exit(1)
+	}()
+
+	// Main program, every second either verify the structure or print stats.
+	for i = 0; i < 10000; i++ {
+		if *verify {
+			ds.Verify()
+		} else {
+			printStats(&memStats, ds)
+		}
+		time.Sleep(time.Second * 1)
+	}
+
+}
+
+// Generate Keys
+// Number of Keys: 7311616
+//	All Payloads Size: [35, 70] GB
 func generateKeys() [7311616]string {
 	var letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	var keyArr [7311616]string
@@ -40,6 +124,8 @@ func generateKeys() [7311616]string {
 	return keyArr
 }
 
+// If Key is present get it
+// If it's not set it with a string of 5000 to 10001 characters
 func getSet(ds *dscache.Dscache, key string) {
 	_, ok := ds.Get(key)
 	if !ok {
@@ -50,6 +136,8 @@ func getSet(ds *dscache.Dscache, key string) {
 	}
 }
 
+// Select a Key randomly from the specied keySize
+// Run getSet on it
 func runOps(ds *dscache.Dscache, keySize int, keyArr *[7311616]string) {
 	for {
 		key := keyArr[rand.Intn(keySize)]
@@ -57,51 +145,7 @@ func runOps(ds *dscache.Dscache, keySize int, keyArr *[7311616]string) {
 	}
 }
 
-func main() {
-
-	verify := flag.Bool("verify", false, "Wether to run on Verify or Simulation Mode.")
-	keySize := flag.Int("keySize", 7311616, "Number of Keys to use in testing.")
-	dsMaxSize := flag.Float64("dsMaxSize", 4.0, "ds Maxsize, in GB, may take floats.")
-	dsLists := flag.Int("dsLists", 32, "ds Number Of Lists.")
-	dsGCSleep := flag.Float64("dsGCSleep", 1.0, "ds GC Sleep, in Seconds, may take floats.")
-	dsWorkerSleep := flag.Float64("dsWorkerSleep", 0.5, "ds Worker Sleep, in Seconds, may take floats.")
-	numGoRoutines := flag.Int("numGoRoutines", 64, "Number of Goroutines to be accessing the cache simultaneously.")
-
-	flag.Parse()
-
-	printConf(*verify, *keySize, *dsMaxSize, *dsLists, *dsGCSleep, *dsWorkerSleep, *numGoRoutines)
-
-	ds := dscache.Custom(uint64(*dsMaxSize*float64(dscache.GB)), *dsLists, time.Duration(float64(time.Second)**dsGCSleep), time.Duration(float64(time.Second)**dsWorkerSleep), nil)
-
-	keyArr := generateKeys()
-
-	for i := 0; i < *numGoRoutines; i++ {
-		go runOps(ds, *keySize, &keyArr)
-	}
-
-	var i int
-	var memStats runtime.MemStats
-
-	c := make(chan os.Signal, 2)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		printExit(i, &memStats, ds)
-		printConf(*verify, *keySize, *dsMaxSize, *dsLists, *dsGCSleep, *dsWorkerSleep, *numGoRoutines)
-		os.Exit(1)
-	}()
-
-	for i = 0; i < 10000; i++ {
-		if *verify {
-			ds.Verify()
-		} else {
-			printStats(&memStats, ds)
-		}
-		time.Sleep(time.Second * 1)
-	}
-
-}
-
+// Print configuration
 func printConf(verify bool, keySize int, dsMaxSize float64, dsLists int, dsGCSleep float64, dsWorkerSleep float64, numGoRoutines int) {
 	fmt.Println("--------------------------------------------")
 	fmt.Println("Verify:\t\t\t\t", verify)
@@ -118,6 +162,7 @@ func printConf(verify bool, keySize int, dsMaxSize float64, dsLists int, dsGCSle
 	fmt.Println()
 }
 
+//Print Stats
 func printStats(memStats *runtime.MemStats, ds *dscache.Dscache) {
 
 	runtime.ReadMemStats(memStats)
@@ -146,6 +191,7 @@ func printStats(memStats *runtime.MemStats, ds *dscache.Dscache) {
 
 }
 
+//Print Exit Message
 func printExit(i int, memStats *runtime.MemStats, ds *dscache.Dscache) {
 
 	fmt.Println()

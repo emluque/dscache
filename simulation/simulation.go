@@ -47,7 +47,7 @@ import (
 	"syscall"
 	"time"
 
-	"../"
+	"github.com/emluque/dscache"
 )
 
 // Create a constant string with 10000 chars

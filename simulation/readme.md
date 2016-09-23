@@ -38,7 +38,8 @@ go run simulation.go
 ###results
 
 ####Test with different Cache Sizes and Default GC Time
-| dsMaxSize | keySize| Payload Est. | NumObjects | GC Sleep | Sys Alloc |
+| dsMaxSize | keySize | Payload Est. | NumObjects | GC Sleep | Sys Alloc |
+| --------- | ------- | ------------ | ---------- | -------- | --------- |
 | 1GB | 2m | 13GB | 141k | 1 sec | 1.94GB |
 | 2GB | 2m | 13GB | 283k | 1 sec | 3.1GB |
 | 4GB | 2m | 13GB | 566k | 1 sec | 5.4GB |

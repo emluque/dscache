@@ -2,7 +2,10 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
+package main
+
 /*
+
 	Script to run simulations of dscache usage to test how it uses memory
 
 	Flags:
@@ -35,8 +38,6 @@
 
 */
 
-package main
-
 import (
 	"flag"
 	"fmt"
@@ -59,7 +60,7 @@ const tenThousandChars = thousandChars + thousandChars + thousandChars + thousan
 func main() {
 
 	verify := flag.Bool("verify", false, "Wether to run on Verify or Simulation Mode.")
-	keySize := flag.Int("keySize", 7311616, "Number of Keys to use in testing.")
+	keySize := flag.Int("keySize", 800000, "Number of Keys to use in testing.")
 	dsMaxSize := flag.Float64("dsMaxSize", 4.0, "ds Maxsize, in GB, may take floats.")
 	dsLists := flag.Int("dsLists", 32, "ds Number Of Lists.")
 	dsGCSleep := flag.Float64("dsGCSleep", 1.0, "ds GC Sleep, in Seconds, may take floats.")
@@ -152,6 +153,7 @@ func printConf(verify bool, keySize int, dsMaxSize float64, dsLists int, dsGCSle
 	fmt.Println("-----")
 	fmt.Println("keySize:\t\t\t", keySize)
 	fmt.Printf("Payload Total:\t\t\t(%dGB, %dGB)\n", keySize*5000/dscache.GB, keySize*10000/dscache.GB)
+	fmt.Printf("Payload Est.:\t\t\t%dGB\n", keySize*7500/dscache.GB)
 	fmt.Println("-----")
 	fmt.Println("ds.MaxSize:\t\t\t", dsMaxSize, "GB")
 	fmt.Println("ds.Lists:\t\t\t", dsLists)

@@ -267,7 +267,7 @@ func (lru *lrucache) verifySize() error {
 
 		//Get to last element of start
 		for start.next != nil {
-			realSize += uint64(len(start.key)) + uint64(len(start.payload)) + 8
+			realSize += uint64(len(start.key)) + uint64(len(start.payload)) + lru.calculateBaseNodeSize()
 			start = start.next
 		}
 

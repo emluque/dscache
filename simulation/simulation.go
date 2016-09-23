@@ -4,16 +4,19 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
+	"os"
+	"os/signal"
 	"runtime"
+	"syscall"
 	"time"
 
 	"../"
 )
 
-var tenChars = "0123456789"
-var hundredChars = tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars
-var thousandChars = hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars
-var tenThousandChars = thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars
+const tenChars = "0123456789"
+const hundredChars = tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars + tenChars
+const thousandChars = hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars + hundredChars
+const tenThousandChars = thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars + thousandChars
 
 /*
   Number of Keys: 7311616
@@ -47,6 +50,13 @@ func getSet(ds *dscache.Dscache, key string) {
 	}
 }
 
+func runOps(ds *dscache.Dscache, keySize int, keyArr *[7311616]string) {
+	for {
+		key := keyArr[rand.Intn(keySize)]
+		getSet(ds, key)
+	}
+}
+
 func main() {
 
 	verify := flag.Bool("verify", false, "Wether to run on Verify or Simulation Mode.")
@@ -59,52 +69,93 @@ func main() {
 
 	flag.Parse()
 
+	printConf(*verify, *keySize, *dsMaxSize, *dsLists, *dsGCSleep, *dsWorkerSleep, *numGoRoutines)
+
 	ds := dscache.Custom(uint64(*dsMaxSize*float64(dscache.GB)), *dsLists, time.Duration(float64(time.Second)**dsGCSleep), time.Duration(float64(time.Second)**dsWorkerSleep), nil)
 
 	keyArr := generateKeys()
 
-	var runOps = func(ds *dscache.Dscache, keyArr *[7311616]string) {
-		for {
-			key := keyArr[rand.Intn(*keySize)]
-			getSet(ds, key)
-		}
-	}
-
 	for i := 0; i < *numGoRoutines; i++ {
-		go runOps(ds, &keyArr)
+		go runOps(ds, *keySize, &keyArr)
 	}
 
+	var i int
 	var memStats runtime.MemStats
 
-	for i := 0; i < 10000; i++ {
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		printExit(i, &memStats, ds)
+		printConf(*verify, *keySize, *dsMaxSize, *dsLists, *dsGCSleep, *dsWorkerSleep, *numGoRoutines)
+		os.Exit(1)
+	}()
+
+	for i = 0; i < 10000; i++ {
 		if *verify {
 			ds.Verify()
 		} else {
-			runtime.ReadMemStats(&memStats)
-
-			fmt.Println("--------------------------------------------")
-			fmt.Println("Alloc:\t\t\t", memStats.Alloc)
-			fmt.Println("Sys:\t\t\t", memStats.Sys)
-			fmt.Println("-----")
-			fmt.Println("TotalAlloc:\t\t", memStats.TotalAlloc)
-			fmt.Println("-----")
-			fmt.Println("HeapAlloc:\t\t", memStats.HeapAlloc)
-			fmt.Println("HeapSys:\t\t", memStats.HeapSys)
-			fmt.Println("HeapIdle:\t\t", memStats.HeapIdle)
-			fmt.Println("HeapInuse:\t\t", memStats.HeapInuse)
-			fmt.Println("HeapReleased:\t\t", memStats.HeapReleased)
-			fmt.Println("HeapObjects:\t\t", memStats.HeapObjects)
-			fmt.Println("-----")
-			fmt.Println("ds.NumObjects:\t\t", ds.NumObjects())
-			fmt.Println("ds.NumGets:\t\t", ds.NumGets)
-			fmt.Println("ds.NumSets:\t\t", ds.NumSets)
-			fmt.Printf("ds.FailureRate:\t\t%.3f\n", ds.FailureRate())
-			fmt.Println("-----")
-			fmt.Println("NextGC:\t\t", memStats.NextGC)
-			fmt.Println("LastGC:\t\t", memStats.LastGC)
-			fmt.Println("NumGC:\t\t", memStats.NumGC)
+			printStats(&memStats, ds)
 		}
 		time.Sleep(time.Second * 1)
 	}
+
+}
+
+func printConf(verify bool, keySize int, dsMaxSize float64, dsLists int, dsGCSleep float64, dsWorkerSleep float64, numGoRoutines int) {
+	fmt.Println("--------------------------------------------")
+	fmt.Println("Verify:\t\t\t\t", verify)
+	fmt.Println("-----")
+	fmt.Println("keySize:\t\t\t", keySize)
+	fmt.Printf("Payload Total:\t\t\t(%dGB, %dGB)\n", keySize*5000/dscache.GB, keySize*10000/dscache.GB)
+	fmt.Println("-----")
+	fmt.Println("ds.MaxSize:\t\t\t", dsMaxSize, "GB")
+	fmt.Println("ds.Lists:\t\t\t", dsLists)
+	fmt.Println("ds.GCSleep:\t\t\t", dsGCSleep)
+	fmt.Println("ds.Workerleep:\t\t\t", dsWorkerSleep)
+	fmt.Println("-----")
+	fmt.Println("NumGoRoutines:\t\t\t", numGoRoutines)
+	fmt.Println()
+}
+
+func printStats(memStats *runtime.MemStats, ds *dscache.Dscache) {
+
+	runtime.ReadMemStats(memStats)
+
+	fmt.Println("--------------------------------------------")
+	fmt.Println("Alloc:\t\t\t", memStats.Alloc)
+	fmt.Println("Sys:\t\t\t", memStats.Sys)
+	fmt.Println("-----")
+	fmt.Println("TotalAlloc:\t\t", memStats.TotalAlloc)
+	fmt.Println("-----")
+	fmt.Println("HeapAlloc:\t\t", memStats.HeapAlloc)
+	fmt.Println("HeapSys:\t\t", memStats.HeapSys)
+	fmt.Println("HeapIdle:\t\t", memStats.HeapIdle)
+	fmt.Println("HeapInuse:\t\t", memStats.HeapInuse)
+	fmt.Println("HeapReleased:\t\t", memStats.HeapReleased)
+	fmt.Println("HeapObjects:\t\t", memStats.HeapObjects)
+	fmt.Println("-----")
+	fmt.Println("ds.NumObjects:\t\t", ds.NumObjects())
+	fmt.Println("ds.NumGets:\t\t", ds.NumGets)
+	fmt.Println("ds.NumSets:\t\t", ds.NumSets)
+	fmt.Printf("ds.FailureRate:\t\t%.3f\n", ds.FailureRate())
+	fmt.Println("-----")
+	fmt.Println("NextGC:\t\t", memStats.NextGC)
+	fmt.Println("LastGC:\t\t", memStats.LastGC)
+	fmt.Println("NumGC:\t\t", memStats.NumGC)
+
+}
+
+func printExit(i int, memStats *runtime.MemStats, ds *dscache.Dscache) {
+
+	fmt.Println()
+	fmt.Println()
+	fmt.Println()
+	printStats(memStats, ds)
+	fmt.Println("--------------------------------------------")
+	fmt.Println()
+	fmt.Println("Exiting.")
+	fmt.Println("Ran ", i, " times.")
+	fmt.Println()
 
 }

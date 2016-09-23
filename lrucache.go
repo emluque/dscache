@@ -8,6 +8,7 @@ import (
 	"unsafe"
 )
 
+//Node Structure for Doubly Linked List
 type node struct {
 	key            string
 	payload        string
@@ -16,6 +17,7 @@ type node struct {
 	validTill      time.Time
 }
 
+//LRUCache structure
 type lrucache struct {
 	keys         map[string]*node
 	listStart    *node
@@ -27,8 +29,10 @@ type lrucache struct {
 	nodeBaseSize uint64
 }
 
+// ErrMaxsize Used when a key + payload is bigger than allowed LRU Cache size
 var ErrMaxsize = errors.New("Value is Bigger than Allowed Maxsize")
 
+// newLRUCache Constructor
 func newLRUCache(maxsize uint64, workerSleep time.Duration) *lrucache {
 	lru := new(lrucache)
 	lru.keys = make(map[string]*node)
@@ -40,6 +44,7 @@ func newLRUCache(maxsize uint64, workerSleep time.Duration) *lrucache {
 	return lru
 }
 
+// set an element
 func (lru *lrucache) set(key, payload string, expires time.Duration) error {
 
 	//Verify Size
@@ -80,6 +85,7 @@ func (lru *lrucache) set(key, payload string, expires time.Duration) error {
 	return nil
 }
 
+// get an element
 func (lru *lrucache) get(key string) (string, bool) {
 	lru.mu.Lock()
 	defer lru.mu.Unlock()
@@ -110,6 +116,11 @@ func (lru *lrucache) purge(key string) bool {
 	return true
 }
 
+// worker Expiration worker
+//
+// Expriration Workers go from the bottom of the list to the top
+// And delete all elements that have expired.
+// Then they wait for the configured time before starting again.
 func (lru *lrucache) worker() {
 	for {
 		end := lru.listEnd
@@ -130,6 +141,7 @@ func (lru *lrucache) worker() {
 	}
 }
 
+// sendToTop promote node to top of list
 func (lru *lrucache) sendToTop(n *node) {
 	var listStart = lru.listStart
 	if listStart == nil {
@@ -155,6 +167,7 @@ func (lru *lrucache) sendToTop(n *node) {
 	lru.listStart = n
 }
 
+// resize Resise list by size from the bottom
 func (lru *lrucache) resize() {
 	if lru.size > lru.maxsize {
 		//Shrink lisk
@@ -165,6 +178,7 @@ func (lru *lrucache) resize() {
 	}
 }
 
+// delete Delete node
 func (lru *lrucache) delete(n *node) {
 	if n.next != nil {
 		n.next.previous = n.previous
@@ -184,12 +198,16 @@ func (lru *lrucache) delete(n *node) {
 	lru.size -= n.size
 }
 
+// calculateBaseNodeSize Calculate the Byte Size of a single Node
 func (lru *lrucache) calculateBaseNodeSize() uint64 {
 	n := new(node)
 	size := uint64(unsafe.Sizeof(n.key)) + uint64(unsafe.Sizeof(n.payload)) + uint64(unsafe.Sizeof(n.previous)) + uint64(unsafe.Sizeof(n.next)) + uint64(unsafe.Sizeof(n.size)) + uint64(unsafe.Sizeof(n.validTill))
 	return size
 }
 
+// verifyEndAndStart testing function
+//
+// Verifies that list is the same from listStart to listEnd
 func (lru *lrucache) verifyEndAndStart() error {
 
 	lru.mu.Lock()
@@ -220,6 +238,9 @@ func (lru *lrucache) verifyEndAndStart() error {
 	return nil
 }
 
+// verifyUniqueKey testing function
+//
+// Verifies that list has all unique keys
 func (lru *lrucache) verifyUniqueKeys() error {
 	lru.mu.Lock()
 	test := make(map[string]bool)
@@ -238,6 +259,9 @@ func (lru *lrucache) verifyUniqueKeys() error {
 	return nil
 }
 
+// verifySize testing function
+//
+// Verifies that list size is consistent with actual size
 func (lru *lrucache) verifySize() error {
 
 	lru.mu.Lock()

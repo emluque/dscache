@@ -1,3 +1,7 @@
+// Copyright 2016 Emiliano Martínez Luque. All rights reserved.
+// Use of this source code is governed by a MIT
+// license that can be found in the LICENSE file.
+
 package dscache
 
 import (
@@ -7,6 +11,7 @@ import (
 	"time"
 )
 
+// Dscache Base Structure
 type Dscache struct {
 	buckets       []*lrucache
 	getListNumber func(string) int
@@ -14,22 +19,25 @@ type Dscache struct {
 	NumSets       uint64
 }
 
-/*
-
-TODO:
-
-- godoc --- Add documentation!
-- Write a proper readme.md!
-
-*/
-
+// Default Number of Buckets in Dscache
 const defaultNumberOfLists = int(32)
+
+// Default Duration of sleep for expiring items workers
 const defaultWorkerSleep = time.Second
 
-var defaultGetListNumber = func(key string) int {
-	return int(key[len(key)-1]+key[len(key)-2]) % defaultNumberOfLists
+// Function that creates the Default Get List Number Function
+//
+// The default getListNumber function just takes the last to characters
+// of Key, adds them and then returns the result % numberOfLists
+var defaultGetListNumber = func(numLists int) func(string) int {
+	return func(key string) int {
+		return int(key[len(key)-1]+key[len(key)-2]) % numLists
+	}
 }
 
+// Byte Sizes Constants
+//
+// Accesible through dscache.GB, dscache.MB, etc.
 const (
 	B  uint64 = iota
 	KB        = 1 << (10 * iota)
@@ -40,6 +48,9 @@ const (
 //	PB
 )
 
+// New DSCache with Default values
+//
+// @param 	maxsize		Maxsize of cache in Bytes
 func New(maxsize uint64) *Dscache {
 
 	if maxsize == 0 {
@@ -51,10 +62,23 @@ func New(maxsize uint64) *Dscache {
 	for i := 0; i < defaultNumberOfLists; i++ {
 		ds.buckets[i] = newLRUCache(maxsize/uint64(defaultNumberOfLists), defaultWorkerSleep)
 	}
-	ds.getListNumber = defaultGetListNumber
+	ds.getListNumber = defaultGetListNumber(defaultNumberOfLists)
 	return ds
 }
 
+// Custom Constructor
+//
+// @param	maxsize	Maxsize of cache in Bytes
+// @param	numberOfLists	Number of Bucktets in Dscache
+//		Suggested Use number of CPU Cores * 8
+//		default: 32
+// @param	gcWorkerSleep	Time to sleep bettween calls to GC
+//		0 to disable GC Worker
+//		default: 1 Second
+// @param	workerSleep	Time to sleep for expiration workers
+//		0 to disable Expiration Worker
+//		default: 1 Second
+// @param	getListNumber	function to calculate the bucket number from a key
 func Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Duration, workerSleep time.Duration, getListNumber func(string) int) *Dscache {
 
 	if maxsize == 0 {
@@ -70,7 +94,7 @@ func Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Duration, work
 	}
 
 	if getListNumber == nil {
-		getListNumber = defaultGetListNumber
+		getListNumber = defaultGetListNumber(numberOfLists)
 	}
 
 	if workerSleep == 0 {
@@ -91,12 +115,20 @@ func Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Duration, work
 
 }
 
+// Set element
+//
+// @param key element key
+// @param payload element payload
+// @param expires Time.Duration of how much time should it be valid
 func (ds *Dscache) Set(key, payload string, expires time.Duration) error {
 	list := ds.getListNumber(key)
 	atomic.AddUint64(&ds.NumSets, 1)
 	return ds.buckets[list].set(key, payload, expires)
 }
 
+// Get element
+//
+// @param key element key
 func (ds *Dscache) Get(key string) (string, bool) {
 	list := ds.getListNumber(key)
 	payload, ok := ds.buckets[list].get(key)
@@ -106,11 +138,15 @@ func (ds *Dscache) Get(key string) (string, bool) {
 	return payload, ok
 }
 
+// Purge (delete) element
+//
+// @param key element key
 func (ds *Dscache) Purge(key string) bool {
 	list := ds.getListNumber(key)
 	return ds.buckets[list].purge(key)
 }
 
+// Garbage Collection Worker
 func gcWorker(gcSleepTime time.Duration) {
 	for {
 		time.Sleep(gcSleepTime)
@@ -118,6 +154,7 @@ func gcWorker(gcSleepTime time.Duration) {
 	}
 }
 
+/*
 func (ds *Dscache) Inspect() {
 	for i := 0; i < len(ds.buckets); i++ {
 		ds.buckets[i].mu.Lock()
@@ -125,7 +162,10 @@ func (ds *Dscache) Inspect() {
 		ds.buckets[i].mu.Unlock()
 	}
 }
+*/
 
+// Verify all of the lits on buckets for inconsistencies
+// Used for testing
 func (ds *Dscache) Verify() {
 	for i := 0; i < len(ds.buckets); i++ {
 		err := ds.buckets[i].verifyEndAndStart()
@@ -143,6 +183,7 @@ func (ds *Dscache) Verify() {
 	}
 }
 
+// NumObjects Get Number of Objects in Cache
 func (ds *Dscache) NumObjects() uint32 {
 	numObjects := uint32(0)
 	for i := 0; i < len(ds.buckets); i++ {
@@ -152,6 +193,7 @@ func (ds *Dscache) NumObjects() uint32 {
 	return numObjects
 }
 
+// FailureRate Gets/(Gets+Sets)
 func (ds *Dscache) FailureRate() float64 {
 	g := ds.NumGets
 	s := ds.NumSets

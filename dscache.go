@@ -118,8 +118,10 @@ func Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Duration, work
 // Set element
 //
 // @param key element key
+//
 // @param payload element payload
-// @param expires Time.Duration of how much time should it be valid
+//
+// @param expires Time.Duration ie: For how much time should it be valid
 func (ds *Dscache) Set(key, payload string, expires time.Duration) error {
 	list := ds.getListNumber(key)
 	atomic.AddUint64(&ds.NumSets, 1)
@@ -164,7 +166,8 @@ func (ds *Dscache) Inspect() {
 }
 */
 
-// Verify all of the lits on buckets for inconsistencies
+// Verify all of the lits on buckets for inconsistencies.
+//
 // Used for testing
 func (ds *Dscache) Verify() {
 	for i := 0; i < len(ds.buckets); i++ {

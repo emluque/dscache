@@ -87,9 +87,13 @@ ds := dscache.Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Durat
 - gcWorkerSleep  
 
     Since Golang is garbage collected it is not possible to control the exact amount of memory that a program is using. Also, when Golang allocates some system memory it does not inmediately release it to the system when not in use.
+
     Consider the following scenario, Dscache is being used heavily and it has filled it's capacity, new sets come in and Dscache frees up it's space to save the new objects. Till the moment that the Golang runtime runs a GC event, the runtime will be allocating both the items on Dscache and the dereferenced old objects. This can create a situation where a lot of memory is allocated that is not actually used by Dscache.
+
     To prevent this, Dscache runs a worker goroutine that calls runtime.GC() and forces a Garbage collection event every _gcWorkerSleep_. This is done to minimize the ammount of uncollected garbage and the memory allocations that they imply.
+
     The default value is 1 Second. But it can be changed to fit your needs.
+
     If you don't wish to use the dscache garbage collector worker, set it to 0 and this behaviour will not run. This is recommended if you are forcing a GC event in other parts of your program.
 - workerSleep
 
@@ -107,7 +111,7 @@ ds = dscache.New(8 * dscache.GB, 128, time.Second, time.Second, nil)
 
 var splitBy100 = func (key string) {
 
-  return int(key[len(key)-1]+key[len(key)-2]*10) % 100
+  return int(key[len(key)-1]-48)+ ((key[len(key)-2]-48)*10)) % 100
 
 }
 

@@ -49,7 +49,8 @@ go run simulation.go
 
 
 ####Test with 4GB Cache and different GC times
-| dsMaxSize | keySize| Payload Est. | NumObjects | GC Sleep | Sys Alloc |
+| dsMaxSize | keySize | Payload Est. | NumObjects | GC Sleep | Sys Alloc |
+| --------- | ------- | ------------ | ---------- | -------- | --------- |
 | 4GB | 800k | 5GB | 566k | 1 sec (default) | 5.35GB |
 | 4GB | 800k | 5GB | 566k | 0.5 sec | 5.31GB |
 | 4GB | 800k | 5GB | 566k | 1.5 sec | 5.5GB |
@@ -58,7 +59,8 @@ go run simulation.go
 | 4GB | 800k | 5GB | 566k | No Forced GC | 9.44GB |
 
 ####Test with 1GB Cache and different GC times
-| dsMaxSize | keySize| Payload Est. | NumObjects | GC Sleep | Sys Alloc |
+| dsMaxSize | keySize | Payload Est. | NumObjects | GC Sleep | Sys Alloc |
+| --------- | ------- | ------------ | ---------- | -------- | --------- |
 | 1GB | 800k | 5GB | 141k | 1 sec (default) | 1.9GB |
 | 1GB | 800k | 5GB | 141k | 0.5 sec | 1.76GB |
 | 1GB | 800k | 5GB | 141k | 1.5 sec | 2.15GB |

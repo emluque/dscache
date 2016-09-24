@@ -9,30 +9,40 @@ go run simulation.go
 ###Flags:
 
   -verify boolean
+
     true 		verify all buckets of dscache every Second
+
     false 	print memory stats every second
 
   -keySize int
+
     Number of keys to be used.
+
       Considering each key may take a paylod from 5000 to 10000 chars,
       the number of possible keys deterimines the total size of all cacheable
       elements. Which combined with dsMaxSize (the size of the cache) will deterimine
       get failure rate.
+
       Maximum is 7311616
 
   -dsMaxSize float64
+
     Maximum size in GB of the cache.
 
   -dsLists	int
+
     Number of buckets in dscache.
 
   -dsGCSleep float64
+
     Seconds to wait before running GC worker in dscache.
 
   -dsWorkerSleep float64
+
   Seconds to wait before running expiration cleanup worker in each bucket.
 
   -numGoRoutines int
+
     Number of goroutines to be running get/set operations.
 
 ###results

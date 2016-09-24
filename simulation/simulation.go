@@ -133,7 +133,7 @@ func getSet(ds *dscache.Dscache, key string) {
 		rand.Seed(time.Now().UnixNano())
 		randomLength := rand.Intn(5000) + 4999
 		str := tenThousandChars[0:randomLength] + "  "
-		ds.Set(key, str, time.Second*60)
+		ds.Set(key, str, time.Hour*2)
 	}
 }
 

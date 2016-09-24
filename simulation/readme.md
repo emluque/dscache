@@ -55,7 +55,10 @@ go run simulation.go
 | 4GB | 2m | 13GB | 566k | 1 sec | 5.4GB |
 | 6GB | 2m | 13GB | 849k | 1 sec | 7.6GB |
 | 8GB | 2m | 13GB | 1130k | 1 sec | 9.96GB |
-| 10GB | 2m | 13GB | 1413k | 1 sec | 12.25GB |
+| 10GB | 3m | 20GB | 1415k | 1 sec | 12.11GB |
+| 12GB | 3m | 20GB | 1698k | 1 sec | 14.46GB |
+| 14GB | 3m | 20GB | 1982k | 1 sec | 16.75GB |
+| 16GB | 3m | 20GB | 2264k | 1 sec | 18.9GB |
 
 
 ####Test with 4GB Cache and different GC times

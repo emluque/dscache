@@ -211,6 +211,8 @@ func (lru *lrucache) calculateBaseNodeSize() uint64 {
 func (lru *lrucache) verifyEndAndStart() error {
 
 	lru.mu.Lock()
+	defer lru.mu.Unlock()
+
 	start := lru.listStart
 
 	if start != nil {
@@ -225,7 +227,6 @@ func (lru *lrucache) verifyEndAndStart() error {
 		//Compare them
 		for start.previous != nil {
 			if end != start {
-				lru.mu.Unlock()
 				return errors.New("listStart does not match order of listEnd")
 			}
 			end = end.previous
@@ -233,7 +234,6 @@ func (lru *lrucache) verifyEndAndStart() error {
 		}
 
 	}
-	lru.mu.Unlock()
 
 	return nil
 }
@@ -243,6 +243,7 @@ func (lru *lrucache) verifyEndAndStart() error {
 // Verifies that list has all unique keys
 func (lru *lrucache) verifyUniqueKeys() error {
 	lru.mu.Lock()
+
 	test := make(map[string]bool)
 	start := lru.listStart
 	for start != nil {
@@ -255,7 +256,6 @@ func (lru *lrucache) verifyUniqueKeys() error {
 		}
 		start = start.next
 	}
-	lru.mu.Unlock()
 	return nil
 }
 
@@ -265,26 +265,9 @@ func (lru *lrucache) verifyUniqueKeys() error {
 func (lru *lrucache) verifySize() error {
 
 	lru.mu.Lock()
+	defer lru.mu.Unlock()
+
 	start := lru.listStart
-	actualSize := uint64(0)
-
-	if start != nil {
-
-		//Get to last element of start
-		for start.next != nil {
-			actualSize += start.size
-			start = start.next
-		}
-
-		//Compare them
-		if actualSize > lru.maxsize {
-			lru.mu.Unlock()
-			err := fmt.Sprintf("actualSize: %v  > maxsize: %v --- size: %v", actualSize, lru.maxsize, lru.size)
-			return errors.New(err)
-		}
-	}
-
-	start = lru.listStart
 	realSize := uint64(0)
 
 	if start != nil {
@@ -297,13 +280,28 @@ func (lru *lrucache) verifySize() error {
 
 		//Compare them
 		if realSize > lru.maxsize {
-			lru.mu.Unlock()
 			err := fmt.Sprintf("realSize: %v  > maxsize: %v --- size: %v", realSize, lru.maxsize, lru.size)
 			return errors.New(err)
 		}
 	}
 
-	lru.mu.Unlock()
+	start = lru.listStart
+	actualSize := uint64(0)
+
+	if start != nil {
+
+		//Get to last element of start
+		for start.next != nil {
+			actualSize += start.size
+			start = start.next
+		}
+
+		//Compare them
+		if actualSize > lru.maxsize {
+			err := fmt.Sprintf("actualSize: %v  > maxsize: %v --- size: %v", actualSize, lru.maxsize, lru.size)
+			return errors.New(err)
+		}
+	}
 
 	return nil
 }

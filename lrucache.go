@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unsafe"
 )
@@ -65,7 +66,12 @@ func (lru *lrucache) set(key, payload string, expires time.Duration) error {
 		old.payload = payload
 		old.size = nodeSize
 		old.validTill = time.Now().Add(expires)
-		lru.size = lru.size - oldSize + nodeSize
+		diff := int64(nodeSize) - int64(oldSize)
+		if diff > 0 {
+			atomic.AddUint64(&lru.size, uint64(diff))
+		} else {
+			atomic.AddUint64(&lru.size, ^uint64(diff-1))
+		}
 		lru.sendToTop(old)
 	} else {
 		//create and add Node
@@ -75,7 +81,7 @@ func (lru *lrucache) set(key, payload string, expires time.Duration) error {
 		n.size = nodeSize
 		n.validTill = time.Now().Add(expires)
 		lru.keys[key] = n
-		lru.size = lru.size + nodeSize
+		atomic.AddUint64(&lru.size, nodeSize)
 		lru.sendToTop(n)
 	}
 
@@ -195,7 +201,7 @@ func (lru *lrucache) delete(n *node) {
 	delete(lru.keys, n.key)
 	n.previous = nil
 	n.next = nil
-	lru.size = lru.size - n.size
+	atomic.AddUint64(&lru.size, ^uint64(n.size-1))
 }
 
 // calculateBaseNodeSize Calculate the Byte Size of a single Node
@@ -243,6 +249,7 @@ func (lru *lrucache) verifyEndAndStart() error {
 // Verifies that list has all unique keys
 func (lru *lrucache) verifyUniqueKeys() error {
 	lru.mu.Lock()
+	defer lru.mu.Unlock()
 
 	test := make(map[string]bool)
 	start := lru.listStart
@@ -269,36 +276,24 @@ func (lru *lrucache) verifySize() error {
 
 	start := lru.listStart
 	realSize := uint64(0)
+	sumSize := uint64(0)
 
 	if start != nil {
 
 		//Get to last element of start
 		for start.next != nil {
 			realSize += uint64(len(start.key)) + uint64(len(start.payload)) + lru.calculateBaseNodeSize()
+			sumSize += start.size
 			start = start.next
 		}
 
 		//Compare them
 		if realSize > lru.maxsize {
-			err := fmt.Sprintf("realSize: %v  > maxsize: %v --- size: %v", realSize, lru.maxsize, lru.size)
+			err := fmt.Sprintf("realSize: %v  > maxsize: %v --- size: %v --sumSize: %v", realSize, lru.maxsize, lru.size, sumSize)
 			return errors.New(err)
 		}
-	}
-
-	start = lru.listStart
-	actualSize := uint64(0)
-
-	if start != nil {
-
-		//Get to last element of start
-		for start.next != nil {
-			actualSize += start.size
-			start = start.next
-		}
-
-		//Compare them
-		if actualSize > lru.maxsize {
-			err := fmt.Sprintf("actualSize: %v  > maxsize: %v --- size: %v", actualSize, lru.maxsize, lru.size)
+		if sumSize > lru.maxsize {
+			err := fmt.Sprintf("sumSize: %v  > maxsize: %v --- size: %v ---realSize: %v", sumSize, lru.maxsize, lru.size, realSize)
 			return errors.New(err)
 		}
 	}

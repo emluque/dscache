@@ -737,6 +737,7 @@ func TestInGoroutines(t *testing.T) {
 	}
 
 	time.Sleep(5 * time.Second)
+
 	err := lru.verifyEndAndStart()
 	if err != nil {
 		t.Error(err)

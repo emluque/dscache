@@ -45,6 +45,11 @@ go run simulation.go
 
     Number of goroutines to be running get/set operations.
 
+  -expires int
+
+    Expire for sets in Seconds. Default 3600 (1 Hour)
+
+
 ###results
 
 ####Test with different Cache Sizes and Default GC Time

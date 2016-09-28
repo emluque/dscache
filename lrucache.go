@@ -195,7 +195,7 @@ func (lru *lrucache) delete(n *node) {
 	delete(lru.keys, n.key)
 	n.previous = nil
 	n.next = nil
-	lru.size -= n.size
+	lru.size = lru.size - n.size
 }
 
 // calculateBaseNodeSize Calculate the Byte Size of a single Node

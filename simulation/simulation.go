@@ -36,6 +36,8 @@ package main
 		-numGoRoutines int
 			Number of goroutines to be running get/set operations.
 
+		-expires int
+			Expire for sets in Seconds. Default 3600 (1 Hour)
 */
 
 import (
@@ -66,9 +68,10 @@ func main() {
 	dsGCSleep := flag.Float64("dsGCSleep", 1.0, "ds GC Sleep, in Seconds, may take floats.")
 	dsWorkerSleep := flag.Float64("dsWorkerSleep", 0.5, "ds Worker Sleep, in Seconds, may take floats.")
 	numGoRoutines := flag.Int("numGoRoutines", 64, "Number of Goroutines to be accessing the cache simultaneously.")
+	expires := flag.Int("expires", 3600, "Expire for sets in Seconds.")
 	flag.Parse()
 
-	printConf(*verify, *keySize, *dsMaxSize, *dsLists, *dsGCSleep, *dsWorkerSleep, *numGoRoutines)
+	printConf(*verify, *keySize, *dsMaxSize, *dsLists, *dsGCSleep, *dsWorkerSleep, *numGoRoutines, *expires)
 
 	ds := dscache.Custom(uint64(*dsMaxSize*float64(dscache.GB)), *dsLists, time.Duration(float64(time.Second)**dsGCSleep), time.Duration(float64(time.Second)**dsWorkerSleep), nil)
 
@@ -76,7 +79,7 @@ func main() {
 
 	// Launch Goroutines that do the actual work.
 	for i := 0; i < *numGoRoutines; i++ {
-		go runOps(ds, *keySize, &keyArr)
+		go runOps(ds, *keySize, &keyArr, time.Duration(*expires)*time.Second)
 	}
 
 	var i int
@@ -88,7 +91,7 @@ func main() {
 	go func() {
 		<-c
 		printExit(i, &memStats, ds)
-		printConf(*verify, *keySize, *dsMaxSize, *dsLists, *dsGCSleep, *dsWorkerSleep, *numGoRoutines)
+		printConf(*verify, *keySize, *dsMaxSize, *dsLists, *dsGCSleep, *dsWorkerSleep, *numGoRoutines, *expires)
 		os.Exit(1)
 	}()
 
@@ -127,27 +130,27 @@ func generateKeys() [7311616]string {
 
 // If Key is present get it
 // If it's not set it with a string of 5000 to 10001 characters
-func getSet(ds *dscache.Dscache, key string) {
+func getSet(ds *dscache.Dscache, key string, expires time.Duration) {
 	_, ok := ds.Get(key)
 	if !ok {
 		rand.Seed(time.Now().UnixNano())
 		randomLength := rand.Intn(5000) + 4999
 		str := tenThousandChars[0:randomLength] + "  "
-		ds.Set(key, str, time.Hour*2)
+		ds.Set(key, str, expires)
 	}
 }
 
 // Select a Key randomly from the specied keySize
 // Run getSet on it
-func runOps(ds *dscache.Dscache, keySize int, keyArr *[7311616]string) {
+func runOps(ds *dscache.Dscache, keySize int, keyArr *[7311616]string, expires time.Duration) {
 	for {
 		key := keyArr[rand.Intn(keySize)]
-		getSet(ds, key)
+		getSet(ds, key, expires)
 	}
 }
 
 // Print configuration
-func printConf(verify bool, keySize int, dsMaxSize float64, dsLists int, dsGCSleep float64, dsWorkerSleep float64, numGoRoutines int) {
+func printConf(verify bool, keySize int, dsMaxSize float64, dsLists int, dsGCSleep float64, dsWorkerSleep float64, numGoRoutines int, expires int) {
 	fmt.Println("--------------------------------------------")
 	fmt.Println("Verify:\t\t\t\t", verify)
 	fmt.Println("-----")
@@ -161,6 +164,7 @@ func printConf(verify bool, keySize int, dsMaxSize float64, dsLists int, dsGCSle
 	fmt.Println("ds.Workerleep:\t\t\t", dsWorkerSleep)
 	fmt.Println("-----")
 	fmt.Println("NumGoRoutines:\t\t\t", numGoRoutines)
+	fmt.Println("expires:\t\t\t", expires)
 	fmt.Println()
 }
 

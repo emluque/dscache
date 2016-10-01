@@ -20,13 +20,14 @@ type node struct {
 
 //LRUCache structure
 type lrucache struct {
-	keys         map[string]*node
-	listStart    *node
-	listEnd      *node
-	size         uint64
+	mu        sync.Mutex
+	keys      map[string]*node
+	listStart *node
+	listEnd   *node
+	size      uint64
+
 	maxsize      uint64
 	workerSleep  time.Duration
-	mu           sync.Mutex
 	nodeBaseSize uint64
 }
 
@@ -129,7 +130,10 @@ func (lru *lrucache) purge(key string) bool {
 // Then they wait for the configured time before starting again.
 func (lru *lrucache) worker() {
 	for {
+		lru.mu.Lock()
 		end := lru.listEnd
+		lru.mu.Unlock()
+
 		for end != nil {
 			if end.validTill.Before(time.Now()) {
 				lru.mu.Lock()
@@ -140,9 +144,12 @@ func (lru *lrucache) worker() {
 				}
 				lru.mu.Unlock()
 			} else {
+				lru.mu.Lock()
 				end = end.previous
+				lru.mu.Unlock()
 			}
 		}
+
 		time.Sleep(lru.workerSleep)
 	}
 }
@@ -186,6 +193,7 @@ func (lru *lrucache) resize() {
 
 // delete Delete node
 func (lru *lrucache) delete(n *node) {
+
 	if n.next != nil {
 		n.next.previous = n.previous
 	}
@@ -198,10 +206,17 @@ func (lru *lrucache) delete(n *node) {
 	if n == lru.listEnd {
 		lru.listEnd = n.previous
 	}
-	delete(lru.keys, n.key)
 	n.previous = nil
 	n.next = nil
-	atomic.AddUint64(&lru.size, ^uint64(n.size-1))
+
+	// Test if it's in the keys. (Function might have been called from worker after it has been deleted by another goroutine
+	// since worker does not lock the structure all the time. The following situation is pausible: A node is selected by worker
+	// in it's iterations, the lock is released, another routine locks and then deletes that node, then worker finds out the node
+	// has expired, locks and tries to delete it again, decrementing lru.size 2 times)
+	if _, ok := lru.keys[n.key]; ok {
+		delete(lru.keys, n.key)
+		atomic.AddUint64(&lru.size, ^uint64(n.size-1))
+	}
 }
 
 // calculateBaseNodeSize Calculate the Byte Size of a single Node
@@ -213,6 +228,7 @@ func (lru *lrucache) calculateBaseNodeSize() uint64 {
 
 // verifyEndAndStart testing function
 //
+// For Concurrent tests.
 // Verifies that list is the same from listStart to listEnd
 func (lru *lrucache) verifyEndAndStart() error {
 
@@ -246,6 +262,7 @@ func (lru *lrucache) verifyEndAndStart() error {
 
 // verifyUniqueKey testing function
 //
+// For Concurrent tests.
 // Verifies that list has all unique keys
 func (lru *lrucache) verifyUniqueKeys() error {
 	lru.mu.Lock()
@@ -258,7 +275,6 @@ func (lru *lrucache) verifyUniqueKeys() error {
 		if !ok {
 			test[start.key] = true
 		} else {
-			lru.mu.Unlock()
 			return errors.New("Duplicated Key in listStart")
 		}
 		start = start.next
@@ -268,6 +284,7 @@ func (lru *lrucache) verifyUniqueKeys() error {
 
 // verifySize testing function
 //
+// For Concurrent tests.
 // Verifies that list size is consistent with actual size
 func (lru *lrucache) verifySize() error {
 

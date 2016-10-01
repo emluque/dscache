@@ -2,6 +2,7 @@ package dscache
 
 import (
 	"math/rand"
+	"sync"
 	"testing"
 	"time"
 )
@@ -849,9 +850,15 @@ func TestInGoroutines3(t *testing.T) {
 		return testMap
 	}
 
-	count := 0
+	count := int32(0)
+	countMu := new(sync.Mutex)
+
 	var benchGetSet = func(lru *lrucache, key string, testMap map[string]string) {
-		if count%100 == 0 {
+		countMu.Lock()
+		co := count
+		countMu.Unlock()
+
+		if co%100 == 0 {
 			lru.purge(key)
 		} else {
 			_, ok := lru.get(key)
@@ -859,7 +866,9 @@ func TestInGoroutines3(t *testing.T) {
 				lru.set(key, testMap[key], time.Second*10)
 			}
 		}
+		countMu.Lock()
 		count++
+		countMu.Unlock()
 	}
 
 	rand.Seed(time.Now().UnixNano())

@@ -38,6 +38,11 @@ package main
 
 		-expires int
 			Expire for sets in Seconds. Default 3600 (1 Hour)
+
+	Example:
+
+		go run simulation.go -keySize 100000  -dsMaxSize 0.4 -dsLists 4 -dsWorkerSleep 0.5 -expires 1 -verify true
+
 */
 
 import (
@@ -50,7 +55,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/emluque/dscache"
+	//"github.com/emluque/dscache"
+	"../"
 )
 
 // Create a constant string with 10000 chars
@@ -96,9 +102,10 @@ func main() {
 	}()
 
 	// Main program, every second either verify the structure or print stats.
-	for i = 0; i < 10000; i++ {
+	for i = 0; i < 100000; i++ {
 		if *verify {
 			ds.Verify()
+			fmt.Print(i, " ")
 		} else {
 			printStats(&memStats, ds)
 		}
@@ -136,7 +143,7 @@ func getSet(ds *dscache.Dscache, key string, expires time.Duration) {
 		rand.Seed(time.Now().UnixNano())
 		randomLength := rand.Intn(5000) + 4999
 		str := tenThousandChars[0:randomLength] + "  "
-		ds.Set(key, str, expires)
+		ds.Set(key, str, time.Second/2)
 	}
 }
 
@@ -155,8 +162,8 @@ func printConf(verify bool, keySize int, dsMaxSize float64, dsLists int, dsGCSle
 	fmt.Println("Verify:\t\t\t\t", verify)
 	fmt.Println("-----")
 	fmt.Println("keySize:\t\t\t", keySize)
-	fmt.Printf("Payload Total:\t\t\t(%dGB, %dGB)\n", keySize*5000/dscache.GB, keySize*10000/dscache.GB)
-	fmt.Printf("Payload Est.:\t\t\t%dGB\n", keySize*7500/dscache.GB)
+	fmt.Printf("Payload Total:\t\t\t(%.2f GB, %.2f GB)\n", float64(keySize)*5000/float64(dscache.GB), float64(keySize)*10000/float64(dscache.GB))
+	fmt.Printf("Payload Est.:\t\t\t%.2f GB\n", float64(keySize)*7500/float64(dscache.GB))
 	fmt.Println("-----")
 	fmt.Println("ds.MaxSize:\t\t\t", dsMaxSize, "GB")
 	fmt.Println("ds.Lists:\t\t\t", dsLists)

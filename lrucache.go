@@ -9,7 +9,7 @@ import (
 	"unsafe"
 )
 
-//Node Structure for Doubly Linked List
+// Node Structure for Doubly Linked List
 type node struct {
 	key            string
 	payload        string
@@ -18,7 +18,7 @@ type node struct {
 	validTill      time.Time
 }
 
-//LRUCache structure
+// LRUCache structure
 type lrucache struct {
 	mu        sync.Mutex
 	keys      map[string]*node
@@ -49,20 +49,20 @@ func newLRUCache(maxsize uint64, workerSleep time.Duration) *lrucache {
 // set an element
 func (lru *lrucache) set(key, payload string, expires time.Duration) error {
 
-	//Verify Size
-	nodeSize := (uint64(len(key)) + uint64(len(payload))) + lru.nodeBaseSize //Size of node structure is 8
+	// Verify Size
+	nodeSize := (uint64(len(key)) + uint64(len(payload))) + lru.nodeBaseSize // Size of node structure is 8
 	if nodeSize > lru.maxsize {
-		//Node Exceeds Maxsize
+		// Node Exceeds Maxsize
 		return ErrMaxsize
 	}
 
 	lru.mu.Lock()
 	defer lru.mu.Unlock()
 
-	//Check to see if it was already set
+	// Check to see if it was already set
 	old, ok := lru.keys[key]
 	if ok {
-		//Key exists
+		// Key exists
 		oldSize := old.size
 		old.payload = payload
 		old.size = nodeSize
@@ -75,7 +75,7 @@ func (lru *lrucache) set(key, payload string, expires time.Duration) error {
 		}
 		lru.sendToTop(old)
 	} else {
-		//create and add Node
+		// create and add Node
 		n := new(node)
 		n.key = key
 		n.payload = payload
@@ -99,11 +99,11 @@ func (lru *lrucache) get(key string) (string, bool) {
 
 	n, ok := lru.keys[key]
 	if !ok {
-		//It doesn't exist
+		// It doesn't exist
 		return "", false
 	}
 	if n.validTill.Before(time.Now()) {
-		//It has expired
+		// It has expired
 		lru.delete(n)
 		return "", false
 	}
@@ -183,7 +183,7 @@ func (lru *lrucache) sendToTop(n *node) {
 // resize Resise list by size from the bottom
 func (lru *lrucache) resize() {
 	if lru.size > lru.maxsize {
-		//Shrink lisk
+		// Shrink lisk
 		for lru.size > lru.maxsize {
 			end := lru.listEnd
 			lru.delete(end)
@@ -239,14 +239,14 @@ func (lru *lrucache) verifyEndAndStart() error {
 
 	if start != nil {
 
-		//Get to last element of start
+		// Get to last element of start
 		for start.next != nil {
 			start = start.next
 		}
 
 		end := lru.listEnd
 
-		//Compare them
+		// Compare them
 		for start.previous != nil {
 			if end != start {
 				return errors.New("listStart does not match order of listEnd")
@@ -297,14 +297,14 @@ func (lru *lrucache) verifySize() error {
 
 	if start != nil {
 
-		//Get to last element of start
+		// Get to last element of start
 		for start.next != nil {
 			realSize += uint64(len(start.key)) + uint64(len(start.payload)) + lru.calculateBaseNodeSize()
 			sumSize += start.size
 			start = start.next
 		}
 
-		//Compare them
+		// Compare them
 		if realSize > lru.maxsize {
 			err := fmt.Sprintf("realSize: %v  > maxsize: %v --- size: %v --sumSize: %v", realSize, lru.maxsize, lru.size, sumSize)
 			return errors.New(err)

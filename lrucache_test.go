@@ -17,28 +17,28 @@ func TestSize(t *testing.T) {
 
 	var expectedSize uint64
 
-	lru.set("a", "123", time.Second*10) //4
+	lru.set("a", "123", time.Second*10) // 4
 	expectedSize = (4 + nodeSize)
 
 	if lru.size != expectedSize {
 		t.Error("lrucache.size not adding correctly. Test 1")
 	}
 
-	lru.set("bb", "12345678", time.Second*10) //+10
+	lru.set("bb", "12345678", time.Second*10) // +10
 	expectedSize += (10 + nodeSize)
 
 	if lru.size != expectedSize {
 		t.Error("lrucache.size not adding correctly. Test 2")
 	}
 
-	lru.set("1234567890", "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", time.Second*10) //+100
+	lru.set("1234567890", "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", time.Second*10) // +100
 	expectedSize += (100 + nodeSize)
 
 	if lru.size != expectedSize {
 		t.Error("lrucache.size not adding correctly. Test 3")
 	}
 
-	lru.set("b234567890", "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", time.Second*10) //+1010
+	lru.set("b234567890", "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", time.Second*10) // +1010
 	expectedSize += (1010 + nodeSize)
 
 	if lru.size != expectedSize {
@@ -48,7 +48,7 @@ func TestSize(t *testing.T) {
 
 func TestSizeError(t *testing.T) {
 	var lru = newLRUCache(16, 0)
-	err := lru.set("a", "1234567890", time.Second*10) //10 + 8
+	err := lru.set("a", "1234567890", time.Second*10) // 10 + 8
 	if err != ErrMaxsize {
 		t.Error("lrucache not returning an error when exceding size. Test 1")
 	}
@@ -157,10 +157,10 @@ func TestMaxsize(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("a", "abc", time.Second*10) //4
-	lru.set("b", "abc", time.Second*10) //4
-	lru.set("c", "abc", time.Second*10) //4
-	lru.set("d", "abc", time.Second*10) //4
+	lru.set("a", "abc", time.Second*10) // 4
+	lru.set("b", "abc", time.Second*10) // 4
+	lru.set("c", "abc", time.Second*10) // 4
+	lru.set("d", "abc", time.Second*10) // 4
 
 	start := lru.listStart
 	if start.key != "d" || start.next.key != "c" || start.next.next.key != "b" || start.next.next.next.key != "a" {
@@ -171,7 +171,7 @@ func TestMaxsize(t *testing.T) {
 		t.Error("Maxsize. Test 1.b.")
 	}
 
-	//Now must delete
+	// Now must delete
 	lru.set("e", "abc", time.Second*10)
 	start = lru.listStart
 	if start.key != "e" || start.next.key != "d" || start.next.next.key != "c" || start.next.next.next.key != "b" || start.next.next.next.next != nil {
@@ -199,12 +199,12 @@ func TestLRUOrderExhaustiveTest0(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //4 + 8
-	lru.set("c", "ccc", time.Second*10) //4 + 8
-	lru.set("b", "bbb", time.Second*10) //4 + 8
-	lru.set("a", "aaa", time.Second*10) //4 + 8
+	lru.set("d", "ddd", time.Second*10) // 4 + 8
+	lru.set("c", "ccc", time.Second*10) // 4 + 8
+	lru.set("b", "bbb", time.Second*10) // 4 + 8
+	lru.set("a", "aaa", time.Second*10) // 4 + 8
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	start := lru.listStart
 	if start.previous != nil || start.key != "a" || start.next.key != "b" || start.next.next.key != "c" || start.next.next.next.key != "d" || start.next.next.next.next != nil {
 		t.Error("LRU Order Exhaustive Test. Test 0. Incorrect ListStart.")
@@ -220,18 +220,18 @@ func TestLRUOrderExhaustiveTest1(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //4 + 8
-	lru.set("c", "ccc", time.Second*10) //4 + 8
-	lru.set("b", "bbb", time.Second*10) //4 + 8
-	lru.set("a", "aaa", time.Second*10) //4 + 8
+	lru.set("d", "ddd", time.Second*10) // 4 + 8
+	lru.set("c", "ccc", time.Second*10) // 4 + 8
+	lru.set("b", "bbb", time.Second*10) // 4 + 8
+	lru.set("a", "aaa", time.Second*10) // 4 + 8
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	tmp, _ := lru.get("a")
 	if tmp != "aaa" {
 		t.Error("LRU Order Exhaustive Test. Test 1. Incorrect get.")
 	}
 
-	//Now it's a->b->c->d
+	// Now it's a->b->c->d
 	start := lru.listStart
 	if start.previous != nil || start.key != "a" || start.next.key != "b" || start.next.next.key != "c" || start.next.next.next.key != "d" || start.next.next.next.next != nil {
 		t.Error("LRU Order Exhaustive Test. Test 1. Incorrect ListStart.")
@@ -247,18 +247,18 @@ func TestLRUOrderExhaustiveTest2(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //4 + 8
-	lru.set("c", "ccc", time.Second*10) //4 + 8
-	lru.set("b", "bbb", time.Second*10) //4 + 8
-	lru.set("a", "aaa", time.Second*10) //4 + 8
+	lru.set("d", "ddd", time.Second*10) // 4 + 8
+	lru.set("c", "ccc", time.Second*10) // 4 + 8
+	lru.set("b", "bbb", time.Second*10) // 4 + 8
+	lru.set("a", "aaa", time.Second*10) // 4 + 8
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	tmp, _ := lru.get("b")
 	if tmp != "bbb" {
 		t.Error("LRU Order Exhaustive Test. Test 2. Incorrect get.")
 	}
 
-	//Now it's b->a->c->d
+	// Now it's b->a->c->d
 	start := lru.listStart
 	if start.previous != nil || start.key != "b" || start.next.key != "a" || start.next.next.key != "c" || start.next.next.next.key != "d" || start.next.next.next.next != nil {
 		t.Error("LRU Order Exhaustive Test. Test 2. Incorrect ListStart.")
@@ -274,18 +274,18 @@ func TestLRUOrderExhaustiveTest3(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //4 + 8
-	lru.set("c", "ccc", time.Second*10) //4 + 8
-	lru.set("b", "bbb", time.Second*10) //4 + 8
-	lru.set("a", "aaa", time.Second*10) //4 + 8
+	lru.set("d", "ddd", time.Second*10) // 4 + 8
+	lru.set("c", "ccc", time.Second*10) // 4 + 8
+	lru.set("b", "bbb", time.Second*10) // 4 + 8
+	lru.set("a", "aaa", time.Second*10) // 4 + 8
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	tmp, _ := lru.get("c")
 	if tmp != "ccc" {
 		t.Error("LRU Order Exhaustive Test. Test 3. Incorrect get.")
 	}
 
-	//Now it's c->a->b->d
+	// Now it's c->a->b->d
 	start := lru.listStart
 	if start.previous != nil || start.key != "c" || start.next.key != "a" || start.next.next.key != "b" || start.next.next.next.key != "d" || start.next.next.next.next != nil {
 		t.Error("LRU Order Exhaustive Test. Test 3. Incorrect ListStart.")
@@ -301,18 +301,18 @@ func TestLRUOrderExhaustiveTest4(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //4 + 8
-	lru.set("c", "ccc", time.Second*10) //4 + 8
-	lru.set("b", "bbb", time.Second*10) //4 + 8
-	lru.set("a", "aaa", time.Second*10) //4 + 8
+	lru.set("d", "ddd", time.Second*10) // 4 + 8
+	lru.set("c", "ccc", time.Second*10) // 4 + 8
+	lru.set("b", "bbb", time.Second*10) // 4 + 8
+	lru.set("a", "aaa", time.Second*10) // 4 + 8
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	tmp, _ := lru.get("d")
 	if tmp != "ddd" {
 		t.Error("LRU Order Exhaustive Test. Test 3. Incorrect get.")
 	}
 
-	//Now it's d->a->b->c
+	// Now it's d->a->b->c
 	start := lru.listStart
 	if start.previous != nil || start.key != "d" || start.next.key != "a" || start.next.next.key != "b" || start.next.next.next.key != "c" || start.next.next.next.next != nil {
 		t.Error("LRU Order Exhaustive Test. Test 3. Incorrect ListStart.")
@@ -328,10 +328,10 @@ func TestSetOfExistingElement(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //4 + 8
-	lru.set("c", "ccc", time.Second*10) //4 + 8
-	lru.set("b", "bbb", time.Second*10) //4 + 8
-	lru.set("a", "aaa", time.Second*10) //4 + 8
+	lru.set("d", "ddd", time.Second*10) // 4 + 8
+	lru.set("c", "ccc", time.Second*10) // 4 + 8
+	lru.set("b", "bbb", time.Second*10) // 4 + 8
+	lru.set("a", "aaa", time.Second*10) // 4 + 8
 
 	lru.set("d", "new", time.Second*10)
 
@@ -340,7 +340,7 @@ func TestSetOfExistingElement(t *testing.T) {
 		t.Error("Set of existing element. Incorrect set.")
 	}
 
-	//Now it's d->a->b->c
+	// Now it's d->a->b->c
 	start := lru.listStart
 	if start.previous != nil || start.key != "d" || start.next.key != "a" || start.next.next.key != "b" || start.next.next.next.key != "c" || start.next.next.next.next != nil {
 		t.Error("Set of existing element. Test 3. Incorrect ListStart.")
@@ -357,10 +357,10 @@ func TestMaxsizeVariousSetsIncludingResets(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("a", "aaa", time.Second*10) //12
-	lru.set("b", "bbb", time.Second*10) //12
-	lru.set("c", "ccc", time.Second*10) //12
-	lru.set("d", "ddd", time.Second*10) //12
+	lru.set("a", "aaa", time.Second*10) // 12
+	lru.set("b", "bbb", time.Second*10) // 12
+	lru.set("c", "ccc", time.Second*10) // 12
+	lru.set("d", "ddd", time.Second*10) // 12
 
 	lru.set("e", "eee", time.Second*10)
 	lru.set("d", "ddd", time.Second*10)
@@ -384,15 +384,15 @@ func TestPurgeExhaustiveTest1(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //4 + 8
-	lru.set("c", "ccc", time.Second*10) //4 + 8
-	lru.set("b", "bbb", time.Second*10) //4 + 8
-	lru.set("a", "aaa", time.Second*10) //4 + 8
+	lru.set("d", "ddd", time.Second*10) // 4 + 8
+	lru.set("c", "ccc", time.Second*10) // 4 + 8
+	lru.set("b", "bbb", time.Second*10) // 4 + 8
+	lru.set("a", "aaa", time.Second*10) // 4 + 8
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	lru.purge("a")
 
-	//Now it's b->c->d
+	// Now it's b->c->d
 	start := lru.listStart
 	if start.previous != nil || start.key != "b" || start.next.key != "c" || start.next.next.key != "d" || start.next.next.next != nil {
 		t.Error("purge Exhaustive Test. Test 1. Incorrect ListStart.")
@@ -408,15 +408,15 @@ func TestPurgeExhaustiveTest2(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //4 + 8
-	lru.set("c", "ccc", time.Second*10) //4 + 8
-	lru.set("b", "bbb", time.Second*10) //4 + 8
-	lru.set("a", "aaa", time.Second*10) //4 + 8
+	lru.set("d", "ddd", time.Second*10) // 4 + 8
+	lru.set("c", "ccc", time.Second*10) // 4 + 8
+	lru.set("b", "bbb", time.Second*10) // 4 + 8
+	lru.set("a", "aaa", time.Second*10) // 4 + 8
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	lru.purge("b")
 
-	//Now it's a->c->d
+	// Now it's a->c->d
 	start := lru.listStart
 	if start.previous != nil || start.key != "a" || start.next.key != "c" || start.next.next.key != "d" || start.next.next.next != nil {
 		t.Error("purge Exhaustive Test. Test 2. Incorrect ListStart.")
@@ -432,15 +432,15 @@ func TestPurgeExhaustiveTest3(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //4 + 8
-	lru.set("c", "ccc", time.Second*10) //4 + 8
-	lru.set("b", "bbb", time.Second*10) //4 + 8
-	lru.set("a", "aaa", time.Second*10) //4 + 8
+	lru.set("d", "ddd", time.Second*10) // 4 + 8
+	lru.set("c", "ccc", time.Second*10) // 4 + 8
+	lru.set("b", "bbb", time.Second*10) // 4 + 8
+	lru.set("a", "aaa", time.Second*10) // 4 + 8
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	lru.purge("c")
 
-	//Now it's a->b->d
+	// Now it's a->b->d
 	start := lru.listStart
 	if start.previous != nil || start.key != "a" || start.next.key != "b" || start.next.next.key != "d" || start.next.next.next != nil {
 		t.Error("purge Exhaustive Test. Test 3. Incorrect ListStart.")
@@ -456,15 +456,15 @@ func TestPurgeExhaustiveTest4(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //4 + 8
-	lru.set("c", "ccc", time.Second*10) //4 + 8
-	lru.set("b", "bbb", time.Second*10) //4 + 8
-	lru.set("a", "aaa", time.Second*10) //4 + 8
+	lru.set("d", "ddd", time.Second*10) // 4 + 8
+	lru.set("c", "ccc", time.Second*10) // 4 + 8
+	lru.set("b", "bbb", time.Second*10) // 4 + 8
+	lru.set("a", "aaa", time.Second*10) // 4 + 8
 
-	//Currently it's a->b->c
+	// Currently it's a->b->c
 	lru.purge("d")
 
-	//Now it's a->b->d
+	// Now it's a->b->d
 	start := lru.listStart
 	if start.previous != nil || start.key != "a" || start.next.key != "b" || start.next.next.key != "c" || start.next.next.next != nil {
 		t.Error("purge Exhaustive Test. Test 4. Incorrect ListStart.")
@@ -480,12 +480,12 @@ func TestExpireExhaustiveTest1(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second/5)  //12
-	lru.set("c", "ccc", time.Second*10) //12
-	lru.set("b", "bbb", time.Second*10) //12
-	lru.set("a", "aaa", time.Second*10) //12
+	lru.set("d", "ddd", time.Second/5)  // 12
+	lru.set("c", "ccc", time.Second*10) // 12
+	lru.set("b", "bbb", time.Second*10) // 12
+	lru.set("a", "aaa", time.Second*10) // 12
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	time.Sleep(time.Second / 2)
 
 	_, ok := lru.get("d")
@@ -493,7 +493,7 @@ func TestExpireExhaustiveTest1(t *testing.T) {
 		t.Error("Expire Exhaustive Test. Test 1. Did not expire.")
 	}
 
-	//Should be a->b->c
+	// Should be a->b->c
 	start := lru.listStart
 	if start.previous != nil || start.key != "a" || start.next.key != "b" || start.next.next.key != "c" || start.next.next.next != nil {
 		t.Error("Expire Exhaustive Test. Test 1. Incorrect ListStart.")
@@ -510,12 +510,12 @@ func TestExpireExhaustiveTest2(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //4
-	lru.set("c", "ccc", time.Second/5)  //4
-	lru.set("b", "bbb", time.Second*10) //4
-	lru.set("a", "aaa", time.Second*10) //4
+	lru.set("d", "ddd", time.Second*10) // 4
+	lru.set("c", "ccc", time.Second/5)  // 4
+	lru.set("b", "bbb", time.Second*10) // 4
+	lru.set("a", "aaa", time.Second*10) // 4
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	time.Sleep(time.Second / 2)
 
 	_, ok := lru.get("c")
@@ -523,7 +523,7 @@ func TestExpireExhaustiveTest2(t *testing.T) {
 		t.Error("Expire Exhaustive Test. Test 2. Did not expire.")
 	}
 
-	//Should be a->b->d
+	// Should be a->b->d
 	start := lru.listStart
 	if start.previous != nil || start.key != "a" || start.next.key != "b" || start.next.next.key != "d" || start.next.next.next != nil {
 		t.Error("Expire Exhaustive Test. Test 2. Incorrect ListStart.")
@@ -539,12 +539,12 @@ func TestExpireExhaustiveTest3(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //4
-	lru.set("c", "ccc", time.Second*10) //4
-	lru.set("b", "bbb", time.Second/5)  //4
-	lru.set("a", "aaa", time.Second*10) //4
+	lru.set("d", "ddd", time.Second*10) // 4
+	lru.set("c", "ccc", time.Second*10) // 4
+	lru.set("b", "bbb", time.Second/5)  // 4
+	lru.set("a", "aaa", time.Second*10) // 4
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	time.Sleep(time.Second / 2)
 
 	_, ok := lru.get("b")
@@ -552,7 +552,7 @@ func TestExpireExhaustiveTest3(t *testing.T) {
 		t.Error("Expire Exhaustive Test. Test 3. Did not expire.")
 	}
 
-	//Should be a->c->d
+	// Should be a->c->d
 	start := lru.listStart
 	if start.previous != nil || start.key != "a" || start.next.key != "c" || start.next.next.key != "d" || start.next.next.next != nil {
 		t.Error("Expire Exhaustive Test. Test 3. Incorrect ListStart.")
@@ -568,12 +568,12 @@ func TestExpireExhaustiveTest4(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //4
-	lru.set("c", "ccc", time.Second*10) //4
-	lru.set("b", "bbb", time.Second*10) //4
-	lru.set("a", "aaa", time.Second/5)  //4
+	lru.set("d", "ddd", time.Second*10) // 4
+	lru.set("c", "ccc", time.Second*10) // 4
+	lru.set("b", "bbb", time.Second*10) // 4
+	lru.set("a", "aaa", time.Second/5)  // 4
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	time.Sleep(time.Second / 2)
 
 	_, ok := lru.get("a")
@@ -581,7 +581,7 @@ func TestExpireExhaustiveTest4(t *testing.T) {
 		t.Error("Expire Exhaustive Test. Test 4. Did not expire.")
 	}
 
-	//Should be b->c->d
+	// Should be b->c->d
 	start := lru.listStart
 	if start.previous != nil || start.key != "b" || start.next.key != "c" || start.next.next.key != "d" || start.next.next.next != nil {
 		t.Error("Expire Exhaustive Test. Test 4. Incorrect ListStart.")
@@ -597,12 +597,12 @@ func TestWorkerExhaustive1(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second/5)  //12
-	lru.set("c", "ccc", time.Second*10) //12
-	lru.set("b", "bbb", time.Second*10) //12
-	lru.set("a", "aaa", time.Second*10) //12
+	lru.set("d", "ddd", time.Second/5)  // 12
+	lru.set("c", "ccc", time.Second*10) // 12
+	lru.set("b", "bbb", time.Second*10) // 12
+	lru.set("a", "aaa", time.Second*10) // 12
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	time.Sleep(time.Second / 2)
 
 	_, ok := lru.get("d")
@@ -610,7 +610,7 @@ func TestWorkerExhaustive1(t *testing.T) {
 		t.Error("Worker Test. Test 1. Did not expire.")
 	}
 
-	//Should be a->b->c
+	// Should be a->b->c
 	start := lru.listStart
 	if start.previous != nil || start.key != "a" || start.next.key != "b" || start.next.next.key != "c" || start.next.next.next != nil {
 		t.Error("Worker Test. Test 1. Incorrect ListStart.")
@@ -627,12 +627,12 @@ func TestWorkerExhaustive2(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //12
-	lru.set("c", "ccc", time.Second/5)  //12
-	lru.set("b", "bbb", time.Second*10) //12
-	lru.set("a", "aaa", time.Second*10) //12
+	lru.set("d", "ddd", time.Second*10) // 12
+	lru.set("c", "ccc", time.Second/5)  // 12
+	lru.set("b", "bbb", time.Second*10) // 12
+	lru.set("a", "aaa", time.Second*10) // 12
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	time.Sleep(time.Second / 2)
 
 	_, ok := lru.get("c")
@@ -640,7 +640,7 @@ func TestWorkerExhaustive2(t *testing.T) {
 		t.Error("Worker Test. Test 2. Did not expire.")
 	}
 
-	//Should be a->b->c
+	// Should be a->b->c
 	start := lru.listStart
 	if start.previous != nil || start.key != "a" || start.next.key != "b" || start.next.next.key != "d" || start.next.next.next != nil {
 		t.Error("Worker Test. Test 2. Incorrect ListStart.")
@@ -657,12 +657,12 @@ func TestWorkerExhaustive3(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //12
-	lru.set("c", "ccc", time.Second*10) //12
-	lru.set("b", "bbb", time.Second/5)  //12
-	lru.set("a", "aaa", time.Second*10) //12
+	lru.set("d", "ddd", time.Second*10) // 12
+	lru.set("c", "ccc", time.Second*10) // 12
+	lru.set("b", "bbb", time.Second/5)  // 12
+	lru.set("a", "aaa", time.Second*10) // 12
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	time.Sleep(time.Second / 2)
 
 	_, ok := lru.get("b")
@@ -670,7 +670,7 @@ func TestWorkerExhaustive3(t *testing.T) {
 		t.Error("Worker Test. Test 3. Did not expire.")
 	}
 
-	//Should be a->b->c
+	// Should be a->b->c
 	start := lru.listStart
 	if start.previous != nil || start.key != "a" || start.next.key != "c" || start.next.next.key != "d" || start.next.next.next != nil {
 		t.Error("Worker Test. Test 3. Incorrect ListStart.")
@@ -687,12 +687,12 @@ func TestWorkerExhaustive4(t *testing.T) {
 	nodeSize := lru.calculateBaseNodeSize()
 	lru.maxsize = (nodeSize + 4) * 4
 
-	lru.set("d", "ddd", time.Second*10) //12
-	lru.set("c", "ccc", time.Second*10) //12
-	lru.set("b", "bbb", time.Second*10) //12
-	lru.set("a", "aaa", time.Second/5)  //12
+	lru.set("d", "ddd", time.Second*10) // 12
+	lru.set("c", "ccc", time.Second*10) // 12
+	lru.set("b", "bbb", time.Second*10) // 12
+	lru.set("a", "aaa", time.Second/5)  // 12
 
-	//Currently it's a->b->c->d
+	// Currently it's a->b->c->d
 	time.Sleep(time.Second / 2)
 
 	_, ok := lru.get("a")
@@ -700,7 +700,7 @@ func TestWorkerExhaustive4(t *testing.T) {
 		t.Error("Worker Test. Test 4. Did not expire.")
 	}
 
-	//Should be a->b->c
+	// Should be a->b->c
 	start := lru.listStart
 	if start.previous != nil || start.key != "b" || start.next.key != "c" || start.next.next.key != "d" || start.next.next.next != nil {
 		t.Error("Worker Test. Test 4. Incorrect ListStart.")

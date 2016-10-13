@@ -21,62 +21,79 @@ The project started as an almost textbook implementation of an LRU Cache for str
 
 ###Create Cache
 
+```go
 ds = dscache.New(Maxsize unit64)
+```
 
   Where Maxsize is the Size of the cache in bytes.
 
 ####Examples
-//Initialize a dscache with a size of 4 GB and default options
+```go
+// Initialize a dscache with a size of 4 GB and default options
 
 ds = dscache.New(4 * dscache.GB)
 
-//Initialize a dscache with a size of 200 MB and default options
+// Initialize a dscache with a size of 200 MB and default options
 
 ds = dscache.New(200 * dscache.MB)
+```
 
 
 ###Set Item
 
+```go
 ds.Set(key string, value string, expire time.Duration)
+```
 
 ####Examples
-//Expiration in one day
+```go
+// Expiration in one day
 
 ds.Set("item:17897", "Json string...", 24 * time.Hour)
 
-//Expiration in 30 minutes
+// Expiration in 30 minutes
 
 ds.Set("item:17897", "Json string...", 30 * time.Minute)
-
+```
 
 ###Get Item
 
+```go
 item, ok := ds.Get(key string)
+```
 
 ####Example
-//Get an item from cache and verify it exists on cache
+```go
+// Get an item from cache and verify it exists on cache
 
 item, ok := ds.Get("item:17897")
 
 if !ok {
 
-  //item was not found on cache
+  // item was not found on cache
 
-  //fetch item from external db
+  // fetch item from external db
 
 }
+```
 
 ###Purge Item
 
+```go
 ds.Purge(key string)
+```
 
 ####Example
 
+```go
 ds.Purge("item:17897")
+```
 
 ##Advanced (Custom) configuration
 
+```go
 ds := dscache.Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Duration, workerSleep time.Duration, getListNumber func(string) int)
+```
 
 - maxsize
 
@@ -103,11 +120,12 @@ ds := dscache.Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Durat
   You can create a custom function to decide which bucket to send your items to. This will be dependent of the type of keys you are using and the number of buckets. Set to nil to use default.
 
 ####Examples
-//Custom dscache
+```go
+// Custom dscache
 
 ds = dscache.New(8 * dscache.GB, 128, time.Second, time.Second, nil)
 
-//Custom dscache with special function for numerical keys. ie: "item:187896"
+// Custom dscache with special function for numerical keys. ie: "item:187896"
 
 var splitBy100 = func (key string) {
 
@@ -116,6 +134,7 @@ var splitBy100 = func (key string) {
 }
 
 ds = dscache.New(2 * dscache.GB, 100, time.Second, time.Second, splitBy100)
+```
 
 
 ##A Note on Memory Usage

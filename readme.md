@@ -86,15 +86,15 @@ ds := dscache.Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Durat
     Number of internal buckets used by Dscache. To prevent serialization with concurrent accesses, Dscache splits it's keys into buckets that can be accessed independently, so that when one routine is accessing one bucket, another one could access another bucket simultaneously. The recommended number of buckets should be 4 or 8 * number of cores in your CPU. the default number is 32.
 - gcWorkerSleep  
 
-    Since Golang is garbage collected it is not possible to control the exact amount of memory that a program is using. Also, when Golang allocates some system memory it does not inmediately release it to the system when not in use.
+    Since Golang is garbage collected it is not possible to control the exact amount of memory that a program is using. Also, when Golang allocates some system memory it does not immediately release it to the system when not in use.
 
-    Consider the following scenario, Dscache is being used heavily and it has filled it's capacity, new sets come in and Dscache frees up it's space to save the new objects. Till the moment that the Golang runtime runs a GC event, the runtime will be allocating both the items on Dscache and the dereferenced old objects. This can create a situation where a lot of memory is allocated that is not actually used by Dscache.
+    Consider the following scenario, Dscache is being used heavily and it has filled its capacity, new sets come in and Dscache frees up its space to save the new objects. Till the moment that the Golang runtime runs a GC event, the runtime will be storing both the items on Dscache and the dereferenced old objects. This can create a situation where a lot of memory is allocated that is not actually used by Dscache.
 
     To prevent this, Dscache runs a worker goroutine that calls runtime.GC() and forces a Garbage collection event every _gcWorkerSleep_. This is done to minimize the ammount of uncollected garbage and the memory allocations that they imply.
 
     The default value is 1 Second. But it can be changed to fit your needs.
 
-    If you don't wish to use the dscache garbage collector worker, set it to 0 and this behaviour will not run. This is recommended if you are forcing a GC event in other parts of your program.
+    If you don't wish to use the dscache garbage collector worker, set it to 0 and this behavior will not run. This is recommended if you are forcing a GC event in other parts of your program.
 - workerSleep
 
   Dscache runs a worker for every bucket that iterates through the elements starting from the last used and frees them if they have expired. This runs every _workerSleep_ . To prevent this from happening (say you have very long expire times) use 0.

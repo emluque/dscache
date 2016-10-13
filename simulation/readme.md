@@ -19,7 +19,7 @@ go run simulation.go
     Number of keys to be used.
 
       Considering each key may take a paylod from 5000 to 10000 chars,
-      the number of possible keys deterimines the total size of all cacheable
+      the number of possible keys determines the total size of all cacheable
       elements. Which combined with dsMaxSize (the size of the cache) will deterimine
       get failure rate.
 

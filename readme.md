@@ -1,25 +1,25 @@
-#Dead Simple LRU Cache
+# Dead Simple LRU Cache
 
 An embeddable Key/Value in memory store for golang.
 
-####Main Characteristics:
+#### Main Characteristics:
 
   - Size Limits to limit the ammount of memory usage.
   - Allows for heavy concurrent access by a huge number of Goroutines.
   - Expiration for items.
   - Strongly tested.
 
-####Motivation
+#### Motivation
 
 A high number of services (micro or plain old SOA) just take data from a datastore (or various), transform it to json or xml and then send it through the network. It is common practice to use a key/value in memory store (like memcached or redis) to cache the results. Using this you can avoid the network roundtrip to the kv store, which might be suitable in some cases.
 
-####What's with the name?
+#### What's with the name?
 
 The project started as an almost textbook implementation of an LRU Cache for strings. It has grown to be a little more complex since then, but the name stayed, cause it's still pretty simple.
 
-##Usage
+## Usage
 
-###Create Cache
+### Create Cache
 
 ```go
 ds = dscache.New(Maxsize unit64)
@@ -27,7 +27,7 @@ ds = dscache.New(Maxsize unit64)
 
   Where Maxsize is the Size of the cache in bytes.
 
-####Examples
+#### Examples
 ```go
 // Initialize a dscache with a size of 4 GB and default options
 
@@ -39,13 +39,13 @@ ds = dscache.New(200 * dscache.MB)
 ```
 
 
-###Set Item
+### Set Item
 
 ```go
 ds.Set(key string, value string, expire time.Duration)
 ```
 
-####Examples
+#### Examples
 ```go
 // Expiration in one day
 
@@ -56,13 +56,13 @@ ds.Set("item:17897", "Json string...", 24 * time.Hour)
 ds.Set("item:17897", "Json string...", 30 * time.Minute)
 ```
 
-###Get Item
+### Get Item
 
 ```go
 item, ok := ds.Get(key string)
 ```
 
-####Example
+#### Example
 ```go
 // Get an item from cache and verify it exists on cache
 
@@ -77,19 +77,19 @@ if !ok {
 }
 ```
 
-###Purge Item
+### Purge Item
 
 ```go
 ds.Purge(key string)
 ```
 
-####Example
+#### Example
 
 ```go
 ds.Purge("item:17897")
 ```
 
-##Advanced (Custom) configuration
+## Advanced (Custom) configuration
 
 ```go
 ds := dscache.Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Duration, workerSleep time.Duration, getListNumber func(string) int)
@@ -119,7 +119,7 @@ ds := dscache.Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Durat
 
   You can create a custom function to decide which bucket to send your items to. This will be dependent of the type of keys you are using and the number of buckets. Set to nil to use default.
 
-####Examples
+#### Examples
 ```go
 // Custom dscache
 
@@ -137,7 +137,7 @@ ds = dscache.New(2 * dscache.GB, 100, time.Second, time.Second, splitBy100)
 ```
 
 
-##A Note on Memory Usage
+## A Note on Memory Usage
 
 __Warning__: appart from the size of Dscache, you must also consider the amount of memory used by your program, dscache goroutines and unused garbage. Don't set Dscache to use all of your system memory. It is suggested that when you set Dscache size, that you consider at least 30% to 40% more memory for all of this. (If you have 10GB free to use by Dscache, set maxsize to 6GB).
 

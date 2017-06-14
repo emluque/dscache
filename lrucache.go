@@ -29,6 +29,7 @@ type lrucache struct {
 	maxsize      uint64
 	workerSleep  time.Duration
 	nodeBaseSize uint64
+	NumEvictions uint64
 }
 
 // ErrMaxsize Used when a key + payload is bigger than allowed LRU Cache size
@@ -216,6 +217,7 @@ func (lru *lrucache) delete(n *node) {
 	if _, ok := lru.keys[n.key]; ok {
 		delete(lru.keys, n.key)
 		atomic.AddUint64(&lru.size, ^uint64(n.size-1))
+		atomic.AddUint64(&lru.NumEvictions, 1)
 	}
 }
 

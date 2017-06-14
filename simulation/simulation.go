@@ -140,7 +140,7 @@ func getSet(ds *dscache.Dscache, key string, expires time.Duration) {
 		rand.Seed(time.Now().UnixNano())
 		randomLength := rand.Intn(5000) + 4999
 		str := tenThousandChars[0:randomLength] + "  "
-		ds.Set(key, str, time.Second/2)
+		ds.Set(key, str, expires)
 	}
 }
 
@@ -165,7 +165,7 @@ func printConf(verify bool, keySize int, dsMaxSize float64, dsLists int, dsGCSle
 	fmt.Println("ds.MaxSize:\t\t\t", dsMaxSize, "GB")
 	fmt.Println("ds.Lists:\t\t\t", dsLists)
 	fmt.Println("ds.GCSleep:\t\t\t", dsGCSleep)
-	fmt.Println("ds.Workerleep:\t\t\t", dsWorkerSleep)
+	fmt.Println("ds.Workersleep:\t\t\t", dsWorkerSleep)
 	fmt.Println("-----")
 	fmt.Println("NumGoRoutines:\t\t\t", numGoRoutines)
 	fmt.Println("expires:\t\t\t", expires)
@@ -193,7 +193,9 @@ func printStats(memStats *runtime.MemStats, ds *dscache.Dscache) {
 	fmt.Println("ds.NumObjects:\t\t", ds.NumObjects())
 	fmt.Println("ds.NumGets:\t\t", ds.NumGets)
 	fmt.Println("ds.NumSets:\t\t", ds.NumSets)
-	fmt.Printf("ds.FailureRate:\t\t%.3f\n", ds.FailureRate())
+	fmt.Println("ds.NumTries:\t\t", ds.NumTries)
+	fmt.Printf("ds.HitRate:\t\t %.3f\n", ds.HitRate())
+	fmt.Println("ds.NumEvictions:\t", ds.NumEvictions())
 	fmt.Println("-----")
 	fmt.Println("NextGC:\t\t", memStats.NextGC)
 	fmt.Println("LastGC:\t\t", memStats.LastGC)

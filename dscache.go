@@ -16,7 +16,7 @@ type Dscache struct {
 	buckets       []*lrucache
 	getListNumber func(string) int
 	NumGets       uint64
-	NumTries      uint64
+	NumRequests   uint64
 	NumSets       uint64
 }
 
@@ -138,7 +138,7 @@ func (ds *Dscache) Get(key string) (string, bool) {
 	if ok {
 		atomic.AddUint64(&ds.NumGets, 1)
 	}
-	atomic.AddUint64(&ds.NumTries, 1)
+	atomic.AddUint64(&ds.NumRequests, 1)
 	return payload, ok
 }
 
@@ -198,7 +198,7 @@ func (ds *Dscache) NumObjects() uint32 {
 	return numObjects
 }
 
-// NumObjects Get Number of Objects in Cache
+// NumEvictions Get Number of Evictions from Cache
 func (ds *Dscache) NumEvictions() uint64 {
 	numEvictions := uint64(0)
 	for i := 0; i < len(ds.buckets); i++ {
@@ -209,5 +209,5 @@ func (ds *Dscache) NumEvictions() uint64 {
 
 // HitRate Gets/Tries
 func (ds *Dscache) HitRate() float64 {
-	return float64(ds.NumGets) / float64(ds.NumTries)
+	return float64(ds.NumGets) / float64(ds.NumRequests)
 }

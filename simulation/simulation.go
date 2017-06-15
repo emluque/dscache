@@ -53,6 +53,7 @@ import (
 	"os/signal"
 	"runtime"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -191,9 +192,9 @@ func printStats(memStats *runtime.MemStats, ds *dscache.Dscache) {
 	fmt.Println("HeapObjects:\t\t", memStats.HeapObjects)
 	fmt.Println("-----")
 	fmt.Println("ds.NumObjects:\t\t", ds.NumObjects())
-	fmt.Println("ds.NumGets:\t\t", ds.NumGets)
-	fmt.Println("ds.NumSets:\t\t", ds.NumSets)
-	fmt.Println("ds.NumTries:\t\t", ds.NumTries)
+	fmt.Println("ds.NumGets:\t\t", atomic.LoadUint64(&ds.NumGets))
+	fmt.Println("ds.NumSets:\t\t", atomic.LoadUint64(&ds.NumSets))
+	fmt.Println("ds.NumRequests:\t\t", atomic.LoadUint64(&ds.NumRequests))
 	fmt.Printf("ds.HitRate:\t\t %.3f\n", ds.HitRate())
 	fmt.Println("ds.NumEvictions:\t", ds.NumEvictions())
 	fmt.Println("-----")

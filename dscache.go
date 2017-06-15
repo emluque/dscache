@@ -192,8 +192,9 @@ func (ds *Dscache) Verify() {
 func (ds *Dscache) NumObjects() uint32 {
 	numObjects := uint32(0)
 	for i := 0; i < len(ds.buckets); i++ {
-		//		numObjects += ds.buckets[i].numObjects
+		ds.buckets[i].mu.Lock()
 		numObjects += uint32(len(ds.buckets[i].keys))
+		ds.buckets[i].mu.Unlock()
 	}
 	return numObjects
 }
@@ -202,12 +203,15 @@ func (ds *Dscache) NumObjects() uint32 {
 func (ds *Dscache) NumEvictions() uint64 {
 	numEvictions := uint64(0)
 	for i := 0; i < len(ds.buckets); i++ {
-		numEvictions += ds.buckets[i].NumEvictions
+		ne := atomic.LoadUint64(&ds.buckets[i].NumEvictions)
+		numEvictions += ne
 	}
 	return numEvictions
 }
 
 // HitRate Gets/Tries
 func (ds *Dscache) HitRate() float64 {
-	return float64(ds.NumGets) / float64(ds.NumRequests)
+	numGets := atomic.LoadUint64(&ds.NumGets)
+	numRequests := atomic.LoadUint64(&ds.NumRequests)
+	return float64(numGets) / float64(numRequests)
 }

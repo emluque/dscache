@@ -15,7 +15,7 @@ A high number of services (micro or plain old SOA) just take data from a datasto
 
 #### What's the Use Case for this?
 
-In general the use of a cache is recommended when values are expensive to compute or to retrive, thus making it better to store them for later use. So it makes sense when you are willing to spend some memory to improve speed if you are expecting keys will get queried more than once.
+In general the use of a cache is recommended when values are expensive to compute or to retrive, thus using the cache to store them for later use. The use of a cache makes sense when you are willing to spend some memory to improve speed if you are expecting keys will get queried more than once.
 
 Use of DSCache is particularly well suited for when:
   - You can fit all of your items in memory and you need time based expiration for the items.
@@ -155,7 +155,7 @@ ds = dscache.New(2 * dscache.GB, 256, time.Second, time.Second, numericFormat)
 // Number of Objects currently stored on the Cache
 numObjects := ds.NumObjects()
 
-// Current Hit Rate (Number of succesful gets / total number of requests)
+// Current Hit Rate (Ratio of Hits to Requests)
 hitRate := ds.HitRate()
 
 //Number of Total Evictions

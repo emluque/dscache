@@ -1,21 +1,33 @@
-# Dead Simple LRU Cache
+# DSCache
 
 An embeddable Key/Value in memory store for golang.
 
 #### Main Characteristics:
 
   - Size Limits to limit the ammount of memory usage.
-  - Allows for heavy concurrent access by a huge number of Goroutines.
-  - Expiration for items.
+  - Allows for concurrent access by different Goroutines.
+  - LRU Eviction and Expiration for items.
   - Strongly tested.
 
 #### Motivation
 
 A high number of services (micro or plain old SOA) just take data from a datastore (or various), transform it to json or xml and then send it through the network. It is common practice to use a key/value in memory store (like memcached or redis) to cache the results. Using this you can avoid the network roundtrip to the kv store, which might be suitable in some cases.
 
-#### What's with the name?
+#### What's the Use Case for this?
 
-The project started as an almost textbook implementation of an LRU Cache for strings. It has grown to be a little more complex since then, but the name stayed, cause it's still pretty simple.
+In general the use of a cache is recommended when values are expensive to compute or to retrive, thus making it better to store them for later use. So it makes sense when you are willing to spend some memory to improve speed if you are expecting keys will get queried more than once.
+
+The Use of DSCache is particularly suited when:
+  . You can fit all of your items in memory and you need time based expiration for the items.
+  . When you have a small number of keys which are queried disproportionally more than the rest of the set and that you can fit into your box's memory. (Ie: 10% of keys get 50% of requests so it makes sense to cache them locally like you would with Memcached or Redis).
+  . As part of a Hierarchy of Caches, again if your request distribution is very uneven, you could have the more common keys on DSCache, and the rest on an external store like Memcached). The reason for this is that a retrieval from DSCache is on th order of the nanoseconds where even on a local version of Memcached you will be considering access on the order or Milliseconds because of the time spent context switching by the OS and the cost of networking. 
+
+
+## A Note on Memory Usage
+
+__Warning__: appart from the size of Dscache, you must also consider the amount of memory used by your program, dscache goroutines and unused garbage. Don't set Dscache to use all of your system memory. It is suggested that when you set Dscache size, that you consider at least 30% to 40% more memory for all of this. (If you have 10GB free to use by Dscache, set maxsize to 6GB).
+
+Please look at [https://github.com/emluque/dscache/tree/master/simulation] to see actual results of variations on this.
 
 ## Usage
 
@@ -138,9 +150,17 @@ var numericFormat = func (key string) {
 ds = dscache.New(2 * dscache.GB, 256, time.Second, time.Second, numericFormat)
 ```
 
+## Statistics
+```go
+// Number of Objects currently stored on the Cache
+numObjects := ds.NumObjects()
 
-## A Note on Memory Usage
+// Current Hit Rate (Number of succesful gets / total number of requests)
+hitRate := ds.HitRate()
 
-__Warning__: appart from the size of Dscache, you must also consider the amount of memory used by your program, dscache goroutines and unused garbage. Don't set Dscache to use all of your system memory. It is suggested that when you set Dscache size, that you consider at least 30% to 40% more memory for all of this. (If you have 10GB free to use by Dscache, set maxsize to 6GB).
+//Number of Total Evictions
+numEvictions := ds.NumEvictions()
 
-Please look at [https://github.com/emluque/dscache/tree/master/simulation] to see actual results of variations on this.
+
+```
+

@@ -1,6 +1,6 @@
 # DSCache
 
-An embeddable Key/Value in memory store for golang.
+An embeddable Key/Value in memory store for golang (similar to Memcached but for a Local Machine).
 
 #### Main Characteristics:
 

@@ -6,7 +6,7 @@ An embeddable Key/Value in memory store for golang.
 
   - Size Limits to limit the ammount of memory usage.
   - Allows for concurrent access by different Goroutines.
-  - LRU Eviction and Expiration for items.
+  - General LRU Eviction Policy plus Time based expiration for items.
   - Strongly tested.
 
 #### Motivation

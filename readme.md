@@ -27,7 +27,7 @@ Use of DSCache is particularly well suited for when:
 
 __Warning__: appart from the size of Dscache, you must also consider the amount of memory used by your program, dscache goroutines and unused garbage. Don't set Dscache to use all of your system memory. It is suggested that when you set Dscache size, that you consider at least 30% to 40% more memory for all of this. (If you have 10GB free to use by Dscache, set maxsize to 6GB).
 
-Please look at [https://github.com/emluque/dscache/tree/master/simulation] to see actual results of variations on this.
+Please look at https://github.com/emluque/dscache/tree/master/simulation to see actual results of variations on this.
 
 ## Usage
 

@@ -6,7 +6,7 @@ An embeddable Key/Value in memory store for golang.
 
   - Size Limits to limit the ammount of memory usage.
   - Allows for concurrent access by different Goroutines.
-  - General LRU Eviction Policy plus Time based expiration for items.
+  - General LRU Eviction Policy plus Time based expiration for items (Size based eviction and Time based eviction).
   - Strongly tested.
 
 #### Motivation
@@ -117,7 +117,7 @@ ds := dscache.Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Durat
 
     Since Golang is garbage collected it is not possible to control the exact amount of memory that a program is using. Also, when Golang allocates some system memory it does not immediately release it to the system when not in use.
 
-    Consider the following scenario, Dscache is being used heavily and it has filled its capacity, new sets come in and Dscache frees up its space to save the new objects. Till the moment that the Golang runtime runs a GC event, the runtime will be storing both the items on Dscache and the dereferenced old objects. This can create a situation where a lot of memory is allocated that is not actually used by Dscache.
+    Consider the following scenario, Dscache is being used heavily and it has filled its capacity, new sets come in and Dscache frees up its space to save the new objects. Till the moment that the Golang runtime runs a GC event, the runtime will be storing in the Heap both the items on Dscache and the dereferenced old objects. This can create a situation where a lot of memory is allocated that is not actually used by Dscache.
 
     To prevent this, Dscache runs a worker goroutine that calls runtime.GC() and forces a Garbage collection event every _gcWorkerSleep_. This is done to minimize the ammount of uncollected garbage and the memory allocations that they imply.
 

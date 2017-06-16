@@ -164,3 +164,10 @@ numEvictions := ds.NumEvictions()
 
 ```
 
+## Alternatives
+
+The following libraries seem to support a similar use case as DSCache:
+
+(https://github.com/karlseguin/ccache)[https://github.com/karlseguin/ccache]
+
+(https://github.com/patrickmn/go-cache)[https://github.com/patrickmn/go-cache]

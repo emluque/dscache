@@ -1,3 +1,5 @@
+[![stability-stable](https://img.shields.io/badge/stability-stable-green.svg)](https://github.com/emersion/stability-badges#stable)
+
 # DSCache
 
 An embeddable Key/Value in memory store for golang (similar to Memcached but for a Local Machine).

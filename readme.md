@@ -98,7 +98,7 @@ ds := dscache.Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Durat
 - maxsize
 
     Size of the cache in bytes.
-- numberOfLists
+- numberOfBuckets
 
     Number of internal buckets used by Dscache. To prevent serialization with concurrent accesses, Dscache splits it's keys into buckets that can be accessed independently, so that when one routine is accessing one bucket, another one could access another bucket simultaneously. The recommended number of buckets should be 4 or 8 * number of cores in your CPU. the default number is 32.
 - gcWorkerSleep  
@@ -131,11 +131,11 @@ var numericFormat = func (key string) {
   numericString := key[index, len(key)]
 
   num, _ := strconv.Atoi(numericString)
-  return num % 128
+  return num % 256
 
 }
 
-ds = dscache.New(2 * dscache.GB, 100, time.Second, time.Second, numericFormat)
+ds = dscache.New(2 * dscache.GB, 256, time.Second, time.Second, numericFormat)
 ```
 
 

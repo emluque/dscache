@@ -34,7 +34,7 @@ var defaultGetBucketNumber = func(numBuckets int) func(string) int {
 	return func(key string) int {
 		seed := uint64(131)
 		hash := uint64(0)
-		for r := range key {
+		for _, r := range key {
 			hash = hash*seed + uint64(r)
 		}
 

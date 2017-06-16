@@ -13,26 +13,32 @@ import (
 
 // Dscache Base Structure
 type Dscache struct {
-	buckets       []*lrucache
-	getListNumber func(string) int
-	NumGets       uint64
-	NumRequests   uint64
-	NumSets       uint64
+	buckets         []*lrucache
+	getBucketNumber func(string) int
+	NumGets         uint64
+	NumRequests     uint64
+	NumSets         uint64
 }
 
 // Default Number of Buckets in Dscache
-const defaultNumberOfLists = int(32)
+const defaultNumberOfBuckets = int(32)
 
 // Default Duration of sleep for expiring items workers
 const defaultWorkerSleep = time.Second
 
-// Function that creates the Default Get List Number Function
+// Function that creates the Default Get Bucket Number Function
 //
-// The default getListNumber function just takes the last to characters
-// of Key, adds them and then returns the result % numberOfLists
-var defaultGetListNumber = func(numLists int) func(string) int {
+// The default getBucketNumber function
+// Taken from http://www.partow.net/programming/hashfunctions/index.html#BKDRHashFunction
+var defaultGetBucketNumber = func(numBuckets int) func(string) int {
 	return func(key string) int {
-		return int((key[len(key)-1]-48)+((key[len(key)-2]-48)*10)) % numLists
+		seed := uint64(131)
+		hash := uint64(0)
+		for r := range key {
+			hash = hash*seed + uint64(r)
+		}
+
+		return int(hash) % numBuckets
 	}
 }
 
@@ -59,18 +65,18 @@ func New(maxsize uint64) *Dscache {
 	}
 
 	ds := new(Dscache)
-	ds.buckets = make([]*lrucache, defaultNumberOfLists, defaultNumberOfLists)
-	for i := 0; i < defaultNumberOfLists; i++ {
-		ds.buckets[i] = newLRUCache(maxsize/uint64(defaultNumberOfLists), defaultWorkerSleep)
+	ds.buckets = make([]*lrucache, defaultNumberOfBuckets, defaultNumberOfBuckets)
+	for i := 0; i < defaultNumberOfBuckets; i++ {
+		ds.buckets[i] = newLRUCache(maxsize/uint64(defaultNumberOfBuckets), defaultWorkerSleep)
 	}
-	ds.getListNumber = defaultGetListNumber(defaultNumberOfLists)
+	ds.getBucketNumber = defaultGetBucketNumber(defaultNumberOfBuckets)
 	return ds
 }
 
 // Custom Constructor
 //
 // @param	maxsize	Maxsize of cache in Bytes
-// @param	numberOfLists	Number of Bucktets in Dscache
+// @param	numberOfBuckets	Number of Bucktets in Dscache
 //		Suggested Use number of CPU Cores * 8
 //		default: 32
 // @param	gcWorkerSleep	Time to sleep bettween calls to GC
@@ -79,8 +85,8 @@ func New(maxsize uint64) *Dscache {
 // @param	workerSleep	Time to sleep for expiration workers
 //		0 to disable Expiration Worker
 //		default: 1 Second
-// @param	getListNumber	function to calculate the bucket number from a key
-func Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Duration, workerSleep time.Duration, getListNumber func(string) int) *Dscache {
+// @param	getBucketNumber	function to calculate the bucket number from a key
+func Custom(maxsize uint64, numberOfBuckets int, gcWorkerSleep time.Duration, workerSleep time.Duration, getBucketNumber func(string) int) *Dscache {
 
 	if maxsize == 0 {
 		panic("Building dscache with maxsize of 0.")
@@ -90,12 +96,12 @@ func Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Duration, work
 		panic("Building dscache with gcWorkerSleep < 1/5 of a Second.")
 	}
 
-	if numberOfLists == 0 {
-		numberOfLists = defaultNumberOfLists
+	if numberOfBuckets == 0 {
+		numberOfBuckets = defaultNumberOfBuckets
 	}
 
-	if getListNumber == nil {
-		getListNumber = defaultGetListNumber(numberOfLists)
+	if getBucketNumber == nil {
+		getBucketNumber = defaultGetBucketNumber(numberOfBuckets)
 	}
 
 	if workerSleep == 0 {
@@ -103,11 +109,11 @@ func Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Duration, work
 	}
 
 	ds := new(Dscache)
-	ds.buckets = make([]*lrucache, numberOfLists, numberOfLists)
-	for i := 0; i < numberOfLists; i++ {
-		ds.buckets[i] = newLRUCache(maxsize/uint64(numberOfLists), workerSleep)
+	ds.buckets = make([]*lrucache, numberOfBuckets, numberOfBuckets)
+	for i := 0; i < numberOfBuckets; i++ {
+		ds.buckets[i] = newLRUCache(maxsize/uint64(numberOfBuckets), workerSleep)
 	}
-	ds.getListNumber = getListNumber
+	ds.getBucketNumber = getBucketNumber
 
 	if gcWorkerSleep > 0 {
 		go gcWorker(gcWorkerSleep)
@@ -124,17 +130,17 @@ func Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Duration, work
 //
 // @param expires Time.Duration ie: For how much time should it be valid
 func (ds *Dscache) Set(key, payload string, expires time.Duration) error {
-	list := ds.getListNumber(key)
+	Bucket := ds.getBucketNumber(key)
 	atomic.AddUint64(&ds.NumSets, 1)
-	return ds.buckets[list].set(key, payload, expires)
+	return ds.buckets[Bucket].set(key, payload, expires)
 }
 
 // Get element
 //
 // @param key element key
 func (ds *Dscache) Get(key string) (string, bool) {
-	list := ds.getListNumber(key)
-	payload, ok := ds.buckets[list].get(key)
+	Bucket := ds.getBucketNumber(key)
+	payload, ok := ds.buckets[Bucket].get(key)
 	if ok {
 		atomic.AddUint64(&ds.NumGets, 1)
 	}
@@ -146,8 +152,8 @@ func (ds *Dscache) Get(key string) (string, bool) {
 //
 // @param key element key
 func (ds *Dscache) Purge(key string) bool {
-	list := ds.getListNumber(key)
-	return ds.buckets[list].purge(key)
+	Bucket := ds.getBucketNumber(key)
+	return ds.buckets[Bucket].purge(key)
 }
 
 // Garbage Collection Worker

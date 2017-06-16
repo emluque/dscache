@@ -115,10 +115,10 @@ ds := dscache.Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Durat
 - workerSleep
 
   Dscache runs a worker for every bucket that iterates through the elements starting from the last used and frees them if they have expired. This runs every _workerSleep_ . To prevent this from happening (say you have very long expire times) use 0.
-- getListNumber
+- getBucketNumber
 
-  You can create a custom function to decide which bucket to send your items to. This will be dependent of the type of keys you are using and the number of buckets. Set to nil to use default.
-
+  You can create a custom function to decide which bucket to send your items to. This will be dependent of the type of keys you are using and the number of buckets. Set to nil to use default. Default hashing function is: http://www.partow.net/programming/hashfunctions/index.html#BKDRHashFunction
+ 
 #### Examples
 ```go
 // Custom dscache
@@ -126,14 +126,16 @@ ds := dscache.Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Durat
 ds = dscache.New(8 * dscache.GB, 128, time.Second, time.Second, nil)
 
 // Custom dscache with special function for numerical keys. ie: "item:187896"
+var numericFormat = func (key string) {
+  index := strings.LastIndex(key, ":")
+  numericString := key[index, len(key)]
 
-var splitBy100 = func (key string) {
-
-  return int(key[len(key)-1]-48)+ ((key[len(key)-2]-48)*10)) % 100
+  num, _ := strconv.Atoi(numericString)
+  return num % 128
 
 }
 
-ds = dscache.New(2 * dscache.GB, 100, time.Second, time.Second, splitBy100)
+ds = dscache.New(2 * dscache.GB, 100, time.Second, time.Second, numericFormat)
 ```
 
 

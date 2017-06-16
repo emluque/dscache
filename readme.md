@@ -17,7 +17,7 @@ A high number of services (micro or plain old SOA) just take data from a datasto
 
 In general the use of a cache is recommended when values are expensive to compute or to retrive, thus making it better to store them for later use. So it makes sense when you are willing to spend some memory to improve speed if you are expecting keys will get queried more than once.
 
-The Use of DSCache is particularly recommended when:
+Use of DSCache is particularly well suited for when:
   - You can fit all of your items in memory and you need time based expiration for the items.
   - You have a small number of keys which are queried disproportionally more than the rest of the set and that you can fit into your box's memory. (Ie: 10% of keys get 50% of requests so it makes sense to cache them locally like you would with Memcached or Redis).
   - As part of a Hierarchy of Caches, again if your request distribution is very uneven, you could have the more common keys on DSCache, and the rest on an external store like Memcached). The reason for this is that a retrieval from DSCache is on th order of the nanoseconds where even on a local version of Memcached you will be considering access on the order or Milliseconds because of the time spent context switching by the OS and the cost of networking. 

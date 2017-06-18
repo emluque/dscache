@@ -15,7 +15,7 @@ An embeddable Key/Value (Strings) in memory store for golang (similar to Memcach
 
 A high number of services (micro or plain old SOA) just take data from a datastore (or various), transform it to json or xml and then send it through the network. It is common practice to use a key/value in memory store (like memcached or redis) to cache the results. Using this you can avoid the network roundtrip to the kv store, which might be suitable in some cases.
 
-#### What's the Use Case for this?
+#### What's the Use Case of this?
 
 In general the use of a cache is recommended when values are expensive to compute or to retrive, thus using the cache to store them for later use. The use of a cache makes sense when you are willing to spend some memory to improve speed if you are expecting keys will get queried more than once.
 
@@ -177,8 +177,10 @@ numRequests := ds.NumRequests()
 
 ## Alternatives
 
-The following libraries seem to support a similar use case as DSCache:
+The following libraries seem to support similar base functionality as DSCache:
 
 [https://github.com/karlseguin/ccache](https://github.com/karlseguin/ccache)
 
 [https://github.com/patrickmn/go-cache](https://github.com/patrickmn/go-cache)
+
+However there are substantial differences in approach from DSCache.

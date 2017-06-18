@@ -15,9 +15,9 @@ import (
 type Dscache struct {
 	buckets         []*lrucache
 	getBucketNumber func(string) int
-	NumGets         uint64
-	NumRequests     uint64
-	NumSets         uint64
+	numGets         uint64
+	numRequests     uint64
+	numSets         uint64
 }
 
 // Default Number of Buckets in Dscache
@@ -131,7 +131,7 @@ func Custom(maxsize uint64, numberOfBuckets int, gcWorkerSleep time.Duration, wo
 // @param expires Time.Duration ie: For how much time should it be valid
 func (ds *Dscache) Set(key, payload string, expires time.Duration) error {
 	Bucket := ds.getBucketNumber(key)
-	atomic.AddUint64(&ds.NumSets, 1)
+	atomic.AddUint64(&ds.numSets, 1)
 	return ds.buckets[Bucket].set(key, payload, expires)
 }
 
@@ -142,9 +142,9 @@ func (ds *Dscache) Get(key string) (string, bool) {
 	Bucket := ds.getBucketNumber(key)
 	payload, ok := ds.buckets[Bucket].get(key)
 	if ok {
-		atomic.AddUint64(&ds.NumGets, 1)
+		atomic.AddUint64(&ds.numGets, 1)
 	}
-	atomic.AddUint64(&ds.NumRequests, 1)
+	atomic.AddUint64(&ds.numRequests, 1)
 	return payload, ok
 }
 
@@ -194,7 +194,25 @@ func (ds *Dscache) Verify() {
 	}
 }
 
-// NumObjects Get Number of Objects in Cache
+// NumGets Number of Gets the cache has had
+func (ds *Dscache) NumGets() uint64 {
+	numGets := atomic.LoadUint64(&ds.numGets)
+	return numGets
+}
+
+// NumRequests Number of Requests the cache has had
+func (ds *Dscache) NumRequests() uint64 {
+	numRequests := atomic.LoadUint64(&ds.numRequests)
+	return numRequests
+}
+
+// NumSets Number of Sets the cache has had
+func (ds *Dscache) NumSets() uint64 {
+	numSets := atomic.LoadUint64(&ds.numSets)
+	return numSets
+}
+
+// NumObjects Number of Objects in Cache
 func (ds *Dscache) NumObjects() uint32 {
 	numObjects := uint32(0)
 	for i := 0; i < len(ds.buckets); i++ {
@@ -205,7 +223,7 @@ func (ds *Dscache) NumObjects() uint32 {
 	return numObjects
 }
 
-// NumEvictions Get Number of Evictions from Cache
+// NumEvictions Number of Evictions from Cache
 func (ds *Dscache) NumEvictions() uint64 {
 	numEvictions := uint64(0)
 	for i := 0; i < len(ds.buckets); i++ {
@@ -217,7 +235,5 @@ func (ds *Dscache) NumEvictions() uint64 {
 
 // HitRate Gets/Tries
 func (ds *Dscache) HitRate() float64 {
-	numGets := atomic.LoadUint64(&ds.NumGets)
-	numRequests := atomic.LoadUint64(&ds.NumRequests)
-	return float64(numGets) / float64(numRequests)
+	return float64(ds.NumGets()) / float64(ds.NumRequests())
 }

@@ -163,6 +163,15 @@ hitRate := ds.HitRate()
 //Number of Total Evictions
 numEvictions := ds.NumEvictions()
 
+// Number of Gets so far
+numGets := ds.NumGets()
+
+// Number of Sets so far
+numSets := ds.NumSets()
+
+// Number of Requests so far
+numRequests := ds.NumRequests()
+
 
 ```
 

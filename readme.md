@@ -141,10 +141,11 @@ ds = dscache.New(8 * dscache.GB, 128, time.Second, time.Second, nil)
 
 // Custom dscache with special function for numerical keys. ie: "item:187896"
 var numericFormat = func (key string) {
-  index := strings.LastIndex(key, ":")
-  numericString := key[index, len(key)]
 
-  num, _ := strconv.Atoi(numericString)
+ 	index := strings.LastIndex(key, ":") + 1
+	numericString := key[index:len(key)]
+	num, _ := strconv.Atoi(numericString)
+
   return num % 256
 
 }

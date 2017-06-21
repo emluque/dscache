@@ -1,12 +1,12 @@
-###dscache/simulation
+### dscache/simulation
 
 Script to run simulations of dscache usage to test how it uses memory
 
-###usage
+### usage
 
 go run simulation.go
 
-###Flags:
+### Flags:
 
   -verify boolean
 
@@ -50,9 +50,9 @@ go run simulation.go
     Expire for sets in Seconds. Default 3600 (1 Hour)
 
 
-###results
+### results
 
-####Test with different Cache Sizes and Default GC Time
+#### Test with different Cache Sizes and Default GC Time
 | dsMaxSize | keySize | Payload Est. | NumObjects | GC Sleep | Sys Alloc |
 | --------- | ------- | ------------ | ---------- | -------- | --------- |
 | 1GB | 2m | 13GB | 141k | 1 sec | 1.94GB |
@@ -66,7 +66,7 @@ go run simulation.go
 | 16GB | 3m | 20GB | 2264k | 1 sec | 18.9GB |
 
 
-####Test with 4GB Cache and different GC times
+#### Test with 4GB Cache and different GC times
 | dsMaxSize | keySize | Payload Est. | NumObjects | GC Sleep | Sys Alloc |
 | --------- | ------- | ------------ | ---------- | -------- | --------- |
 | 4GB | 800k | 5GB | 566k | 1 sec (default) | 5.35GB |
@@ -76,7 +76,7 @@ go run simulation.go
 | 4GB | 800k | 5GB | 566k | 3 sec | 6.0GB |
 | 4GB | 800k | 5GB | 566k | No Forced GC | 9.44GB |
 
-####Test with 1GB Cache and different GC times
+#### Test with 1GB Cache and different GC times
 | dsMaxSize | keySize | Payload Est. | NumObjects | GC Sleep | Sys Alloc |
 | --------- | ------- | ------------ | ---------- | -------- | --------- |
 | 1GB | 800k | 5GB | 141k | 1 sec (default) | 1.9GB |

@@ -36,7 +36,7 @@ Please look at https://github.com/emluque/dscache/tree/master/simulation to see 
 ### Create Cache
 
 ```go
-ds = dscache.New(Maxsize unit64)
+ds, err := dscache.New(Maxsize unit64)
 ```
 
   Where Maxsize is the Size of the cache in bytes.
@@ -45,11 +45,11 @@ ds = dscache.New(Maxsize unit64)
 ```go
 // Initialize a dscache with a size of 4 GB and default options
 
-ds = dscache.New(4 * dscache.GB)
+ds, err := dscache.New(4 * dscache.GB)
 
 // Initialize a dscache with a size of 200 MB and default options
 
-ds = dscache.New(200 * dscache.MB)
+ds, err := dscache.New(200 * dscache.MB)
 ```
 
 
@@ -106,7 +106,7 @@ ds.Purge("item:17897")
 ## Advanced (Custom) configuration
 
 ```go
-ds := dscache.Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Duration, workerSleep time.Duration, getListNumber func(string) int)
+ds, err := dscache.Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Duration, workerSleep time.Duration, getListNumber func(string) int)
 ```
 
 - maxsize
@@ -137,7 +137,7 @@ ds := dscache.Custom(maxsize uint64, numberOfLists int, gcWorkerSleep time.Durat
 ```go
 // Custom dscache
 
-ds = dscache.New(8 * dscache.GB, 128, time.Second, time.Second, nil)
+ds, err := dscache.New(8 * dscache.GB, 128, time.Second, time.Second, nil)
 
 // Custom dscache with special function for numerical keys. ie: "item:187896"
 var numericFormat = func (key string) {
@@ -150,7 +150,7 @@ var numericFormat = func (key string) {
 
 }
 
-ds = dscache.New(2 * dscache.GB, 256, time.Second, time.Second, numericFormat)
+ds, err := dscache.New(2 * dscache.GB, 256, time.Second, time.Second, numericFormat)
 ```
 
 ## Statistics

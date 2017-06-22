@@ -76,7 +76,7 @@ func main() {
 
 	printConf(*verify, *keySize, *dsMaxSize, *dsLists, *dsGCSleep, *dsWorkerSleep, *numGoRoutines, *expires)
 
-	ds := dscache.Custom(uint64(*dsMaxSize*float64(dscache.GB)), *dsLists, time.Duration(float64(time.Second)**dsGCSleep), time.Duration(float64(time.Second)**dsWorkerSleep), nil)
+	ds, _ := dscache.Custom(uint64(*dsMaxSize*float64(dscache.GB)), *dsLists, time.Duration(float64(time.Second)**dsGCSleep), time.Duration(float64(time.Second)**dsWorkerSleep), nil)
 
 	keyArr := generateKeys()
 

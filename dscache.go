@@ -5,6 +5,7 @@
 package dscache
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 	"sync/atomic"
@@ -25,6 +26,12 @@ const defaultNumberOfBuckets = int(32)
 
 // Default Duration of sleep for expiring items workers
 const defaultWorkerSleep = time.Second
+
+// ErrCreateMaxsizeOfZero Returned when attemping to creat DSCache with a maxsize of 0
+var ErrCreateMaxsizeOfZero = errors.New("Building dscache with maxsize of 0")
+
+// ErrCreateWorkerSleep Returned when attemping to creat DSCache with a gcWorkerSleep lower than 1/5
+var ErrCreateGCWorkerSleep = errors.New("Building dscache with gcWorkerSleep < 1/5 of a Second")
 
 // Function that creates the Default Get Bucket Number Function
 //
@@ -58,10 +65,10 @@ const (
 // New DSCache with Default values
 //
 // @param 	maxsize		Maxsize of cache in Bytes
-func New(maxsize uint64) *Dscache {
+func New(maxsize uint64) (*Dscache, error) {
 
 	if maxsize == 0 {
-		panic("Building dscache with maxsize of 0.")
+		return nil, ErrCreateMaxsizeOfZero
 	}
 
 	ds := new(Dscache)
@@ -70,7 +77,7 @@ func New(maxsize uint64) *Dscache {
 		ds.buckets[i] = newLRUCache(maxsize/uint64(defaultNumberOfBuckets), defaultWorkerSleep)
 	}
 	ds.getBucketNumber = defaultGetBucketNumber(defaultNumberOfBuckets)
-	return ds
+	return ds, nil
 }
 
 // Custom Constructor
@@ -86,14 +93,14 @@ func New(maxsize uint64) *Dscache {
 //		0 to disable Expiration Worker
 //		default: 1 Second
 // @param	getBucketNumber	function to calculate the bucket number from a key
-func Custom(maxsize uint64, numberOfBuckets int, gcWorkerSleep time.Duration, workerSleep time.Duration, getBucketNumber func(string) int) *Dscache {
+func Custom(maxsize uint64, numberOfBuckets int, gcWorkerSleep time.Duration, workerSleep time.Duration, getBucketNumber func(string) int) (*Dscache, error) {
 
 	if maxsize == 0 {
-		panic("Building dscache with maxsize of 0.")
+		return nil, ErrCreateMaxsizeOfZero
 	}
 
 	if gcWorkerSleep > 0 && gcWorkerSleep < time.Second/5 {
-		panic("Building dscache with gcWorkerSleep < 1/5 of a Second.")
+		return nil, ErrCreateGCWorkerSleep
 	}
 
 	if numberOfBuckets == 0 {
@@ -118,7 +125,7 @@ func Custom(maxsize uint64, numberOfBuckets int, gcWorkerSleep time.Duration, wo
 	if gcWorkerSleep > 0 {
 		go gcWorker(gcWorkerSleep)
 	}
-	return ds
+	return ds, nil
 
 }
 

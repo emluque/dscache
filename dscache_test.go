@@ -9,8 +9,8 @@ import (
 
 func TestDscacheBasicGetSet(t *testing.T) {
 
-	var getListNumber = func(key string) int {
-		return int(key[len(key)-1]) % 32
+	var getListNumber = func(key string) uint32 {
+		return uint32(key[len(key)-1]) % 32
 	}
 	ds, _ := Custom(316368, 32, 0, 0, getListNumber)
 
@@ -34,8 +34,8 @@ func TestDscacheBasicGetSet(t *testing.T) {
 }
 
 func TestDscacheSetOfExistingElement(t *testing.T) {
-	var getListNumber = func(key string) int {
-		return int(key[len(key)-1]) % 32
+	var getListNumber = func(key string) uint32 {
+		return uint32(key[len(key)-1]) % 32
 	}
 	ds, _ := Custom(316368, 32, 0, 0, getListNumber)
 
@@ -53,8 +53,8 @@ func TestDscacheSetOfExistingElement(t *testing.T) {
 }
 
 func TestDscachePurge(t *testing.T) {
-	var getListNumber = func(key string) int {
-		return int(key[len(key)-1]) % 32
+	var getListNumber = func(key string) uint32 {
+		return uint32(key[len(key)-1]) % 32
 	}
 	ds, _ := Custom(316368, 32, 0, 0, getListNumber)
 
@@ -73,8 +73,8 @@ func TestDscachePurge(t *testing.T) {
 }
 
 func TestDscacheExpire(t *testing.T) {
-	var getListNumber = func(key string) int {
-		return int(key[len(key)-1]) % 32
+	var getListNumber = func(key string) uint32 {
+		return uint32(key[len(key)-1]) % 32
 	}
 	ds, _ := Custom(316368, 32, 0, 0, getListNumber)
 
@@ -124,8 +124,8 @@ func Benchmark_Get_1(b *testing.B) {
 
 	rand.Seed(time.Now().UnixNano())
 
-	var getListNumber = func(key string) int {
-		return int(key[len(key)-1]) % 32
+	var getListNumber = func(key string) uint32 {
+		return uint32(key[len(key)-1]) % 32
 	}
 	ds, _ := Custom(316*KB, 32, 0, time.Second/2, getListNumber)
 

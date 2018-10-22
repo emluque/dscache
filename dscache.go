@@ -15,7 +15,7 @@ import (
 // Dscache Base Structure
 type Dscache struct {
 	buckets         []*lrucache
-	getBucketNumber func(string) int
+	getBucketNumber func(string) uint32
 	numGets         uint64
 	numRequests     uint64
 	numSets         uint64
@@ -30,22 +30,22 @@ const defaultWorkerSleep = time.Second
 // ErrCreateMaxsizeOfZero Returned when attemping to creat DSCache with a maxsize of 0
 var ErrCreateMaxsizeOfZero = errors.New("Building dscache with maxsize of 0")
 
-// ErrCreateWorkerSleep Returned when attemping to creat DSCache with a gcWorkerSleep lower than 1/5
+// ErrCreateGCWorkerSleep Returned when attemping to creat DSCache with a gcWorkerSleep lower than 1/5
 var ErrCreateGCWorkerSleep = errors.New("Building dscache with gcWorkerSleep < 1/5 of a Second")
 
 // Function that creates the Default Get Bucket Number Function
 //
 // The default getBucketNumber function
 // Taken from http://www.partow.net/programming/hashfunctions/index.html#BKDRHashFunction
-var defaultGetBucketNumber = func(numBuckets int) func(string) int {
-	return func(key string) int {
+var defaultGetBucketNumber = func(numBuckets int) func(string) uint32 {
+	return func(key string) uint32 {
 		seed := uint64(131)
 		hash := uint64(0)
 		for _, r := range key {
 			hash = hash*seed + uint64(r)
 		}
 
-		return int(hash) % numBuckets
+		return uint32(hash) % uint32(numBuckets)
 	}
 }
 
@@ -93,7 +93,7 @@ func New(maxsize uint64) (*Dscache, error) {
 //		0 to disable Expiration Worker
 //		default: 1 Second
 // @param	getBucketNumber	function to calculate the bucket number from a key
-func Custom(maxsize uint64, numberOfBuckets int, gcWorkerSleep time.Duration, workerSleep time.Duration, getBucketNumber func(string) int) (*Dscache, error) {
+func Custom(maxsize uint64, numberOfBuckets int, gcWorkerSleep time.Duration, workerSleep time.Duration, getBucketNumber func(string) uint32) (*Dscache, error) {
 
 	if maxsize == 0 {
 		return nil, ErrCreateMaxsizeOfZero
